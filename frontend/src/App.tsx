@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { loader } from '@monaco-editor/react';
 import { EditorView } from './components/EditorView';
 import { ThemeContext, useThemeProvider } from './hooks/useTheme';
@@ -6,22 +6,15 @@ import {
   getStoredFiles, saveFiles, getActiveFileId, setActiveFileId as saveActiveFileId,
   computeContentHash, StoredFile
 } from './services/storageService';
-import { detectLanguage } from './utils/detectLanguage';
+import { detectLanguage, detectLanguageAI } from './utils/detectLanguage';
 import { fetchRawContent, getStoredToken, GitHubRepo, RepoTreeItem } from './services/githubService';
 import { GitHubImportModal } from './components/GitHubImportModal';
-import { Loader2 } from 'lucide-react';
 
-// Pin Monaco to the specific version from package.json and use CDN for engine assets
+// Configure Monaco CDN path — @monaco-editor/react handles init internally
 loader.config({
   paths: {
     vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.53.0/min/vs'
   }
-});
-
-loader.init().then(() => {
-  console.log('Monaco Editor (CDN) preloaded successfully');
-}).catch((error) => {
-  console.error('Failed to preload Monaco:', error);
 });
 
 export const App: React.FC = () => {
@@ -81,6 +74,14 @@ export const App: React.FC = () => {
     };
     setFiles(prev => [...prev, newFile]);
     setActiveFileId(fileId);
+    // Refine with Magika AI in background
+    detectLanguageAI(file.name, text).then(aiLang => {
+      if (aiLang && aiLang !== syncLanguage) {
+        setFiles(prev => prev.map(f =>
+          f.id === fileId ? { ...f, language: aiLang } : f
+        ));
+      }
+    });
   }, []);
 
   const handleFileDelete = useCallback((id: string) => {
@@ -120,6 +121,14 @@ export const App: React.FC = () => {
     };
     setFiles(prev => [...prev, newFile]);
     setActiveFileId(fileId);
+    // Refine with Magika AI in background
+    detectLanguageAI(fileName, content).then(aiLang => {
+      if (aiLang && aiLang !== language) {
+        setFiles(prev => prev.map(f =>
+          f.id === fileId ? { ...f, language: aiLang } : f
+        ));
+      }
+    });
   }, []);
 
   // ─── Full Repo Import ────────────────────────────────────────────────
@@ -161,12 +170,20 @@ export const App: React.FC = () => {
           file.repoOrigin.owner, file.repoOrigin.repo,
           file.repoOrigin.branch, file.path || file.name, token
         );
-        const lang = detectLanguage(file.name, content);
+        const syncLang = detectLanguage(file.name, content);
         setFiles(prev => prev.map(f =>
           f.id === id
-            ? { ...f, content, language: lang, contentHash: computeContentHash(content), contentLoaded: true }
+            ? { ...f, content, language: syncLang, contentHash: computeContentHash(content), contentLoaded: true }
             : f
         ));
+        // Refine with Magika AI in background
+        detectLanguageAI(file.name, content).then(aiLang => {
+          if (aiLang && aiLang !== syncLang) {
+            setFiles(prev => prev.map(f =>
+              f.id === id ? { ...f, language: aiLang } : f
+            ));
+          }
+        });
       } catch (err) {
         console.error('Failed to load file content:', err);
         setFiles(prev => prev.map(f =>
@@ -197,34 +214,25 @@ export const App: React.FC = () => {
   return (
     <ThemeContext.Provider value={themeCtx}>
       <div className="min-h-screen font-sans flex flex-col relative overflow-hidden">
-        <Suspense fallback={
-          <div className="flex-1 flex items-center justify-center bg-[#0b1120]">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 size={32} className="animate-spin text-blue-500" />
-              <span className="text-slate-400 font-mono text-sm tracking-widest uppercase animate-pulse">Initializing System...</span>
-            </div>
-          </div>
-        }>
-          <EditorView
-            files={files}
-            activeFileId={activeFileId}
-            loadingFileId={loadingFileId}
-            onFileSelect={handleFileSelect}
-            onFileCreate={handleFileCreate}
-            onFileDelete={handleFileDelete}
-            onFileUpload={handleFileUpload}
-            onCodeChange={handleCodeChange}
-            onLanguageChange={handleLanguageChange}
-            onOpenGitHub={() => setShowGitHubModal(true)}
-            onRepoDelete={handleRepoDelete}
-          />
-          <GitHubImportModal
-            isOpen={showGitHubModal}
-            onClose={() => setShowGitHubModal(false)}
-            onImport={handleGitHubImport}
-            onImportRepo={handleRepoImport}
-          />
-        </Suspense>
+        <EditorView
+          files={files}
+          activeFileId={activeFileId}
+          loadingFileId={loadingFileId}
+          onFileSelect={handleFileSelect}
+          onFileCreate={handleFileCreate}
+          onFileDelete={handleFileDelete}
+          onFileUpload={handleFileUpload}
+          onCodeChange={handleCodeChange}
+          onLanguageChange={handleLanguageChange}
+          onOpenGitHub={() => setShowGitHubModal(true)}
+          onRepoDelete={handleRepoDelete}
+        />
+        <GitHubImportModal
+          isOpen={showGitHubModal}
+          onClose={() => setShowGitHubModal(false)}
+          onImport={handleGitHubImport}
+          onImportRepo={handleRepoImport}
+        />
       </div>
     </ThemeContext.Provider>
   );

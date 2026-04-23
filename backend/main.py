@@ -27,6 +27,12 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(github.router, prefix="/api/github", tags=["GitHub"])
 
 
+@app.get("/")
+def root_health():
+    return {"status": "ok", "service": "CodeCollab API"}
+
+
+@app.get("/health")
 @app.get("/api/health")
 def health():
     return {"status": "ok"}

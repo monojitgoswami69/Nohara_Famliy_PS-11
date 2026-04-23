@@ -6,6 +6,7 @@ avoiding CORS issues from the browser.
 
 import httpx
 from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi.responses import PlainTextResponse
 
 router = APIRouter()
 
@@ -87,7 +88,7 @@ async def fetch_file(
         resp = await client.get(url, headers=headers)
     if resp.status_code != 200:
         raise HTTPException(resp.status_code, "Failed to fetch file")
-    return resp.text
+    return PlainTextResponse(resp.text)
 
 
 @router.get("/repos/{owner}/{repo}/tree/{branch}")

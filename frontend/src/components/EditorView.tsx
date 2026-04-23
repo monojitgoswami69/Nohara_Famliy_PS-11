@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ModernMonacoEditor } from './ModernMonacoEditor';
 import { FileExplorer } from './FileExplorer';
 import { StoredFile } from '../services/storageService';
 import { useTheme } from '../hooks/useTheme';
-import { VERSION } from '../constants';
-import { detectLanguage } from '../utils/detectLanguage';
+import { detectLanguage, detectLanguageAI } from '../utils/detectLanguage';
 import {
   FileCode, Plus, Upload, Code2, FolderOpen, Sun, Moon, Github
 } from 'lucide-react';
@@ -71,16 +70,25 @@ export const EditorView: React.FC<EditorViewProps> = ({
     setSelectionCount(0);
   }, [activeFileId]);
 
-  const detectedLanguage = useMemo(() => {
-    if (!activeFile) return '';
-    return detectLanguage(activeFile.name, activeFile.content);
-  }, [activeFile?.name, activeFile?.content]);
-
+  // Detect language via sync (instant) then refine with Magika AI
   useEffect(() => {
-    if (activeFile && !activeFile.language && detectedLanguage) {
-      onLanguageChange(activeFile.id, detectedLanguage);
+    if (!activeFile || activeFile.language) return;
+
+    // Immediate sync detection from extension
+    const syncLang = detectLanguage(activeFile.name, activeFile.content);
+    if (syncLang) {
+      onLanguageChange(activeFile.id, syncLang);
     }
-  }, [detectedLanguage, activeFile, onLanguageChange]);
+
+    // Refine with AI if there's content
+    if (activeFile.content && activeFile.content.trim().length > 20) {
+      detectLanguageAI(activeFile.name, activeFile.content).then(aiLang => {
+        if (aiLang && aiLang !== syncLang) {
+          onLanguageChange(activeFile.id, aiLang);
+        }
+      });
+    }
+  }, [activeFile?.id, activeFile?.language, activeFile?.name, activeFile?.content, onLanguageChange]);
 
   useEffect(() => {
     localStorage.setItem('editor-font-size', fontSize.toString());
@@ -102,7 +110,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
       <header className={`h-14 flex items-center justify-between px-4 ${isDark ? 'bg-[#181821]' : 'bg-[#DBDFE7]'} z-20 shadow-sm border-b ${isDark ? 'border-slate-800/50' : 'border-slate-300/50'}`}>
         <div className="flex items-center gap-3">
           <span className={`font-black tracking-tighter kode-font text-[28px] ${textPrimary} select-none`}>
-            CODECOLLAB<span className="text-blue-500 text-[14px] font-mono ml-2 opacity-70">// v{VERSION}</span>
+            CODECOLLAB
           </span>
         </div>
 

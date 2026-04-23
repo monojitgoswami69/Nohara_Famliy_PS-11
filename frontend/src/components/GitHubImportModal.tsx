@@ -10,7 +10,7 @@ import {
   fetchFileContent, fetchFromPublicUrl, parseGitHubUrl, fetchRepoTree,
   GitHubUser, GitHubRepo, GitHubContent, RepoTreeItem
 } from '../services/githubService';
-import { detectLanguage } from '../utils/detectLanguage';
+import { detectLanguageAI } from '../utils/detectLanguage';
 
 type Tab = 'url' | 'connect';
 type BrowseView = 'auth' | 'repos' | 'files';
@@ -169,7 +169,7 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
     try {
       const t = getStoredToken();
       const content = await fetchFileContent(item.download_url, t);
-      const lang = detectLanguage(item.name, content);
+      const lang = await detectLanguageAI(item.name, content);
       onImport(item.name, content, lang);
       onClose();
     } catch (e: any) {
@@ -190,7 +190,7 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
     setUrlSuccess('');
     try {
       const { fileName, content } = await fetchFromPublicUrl(url.trim());
-      const lang = detectLanguage(fileName, content);
+      const lang = await detectLanguageAI(fileName, content);
       setUrlSuccess(`Imported "${fileName}" successfully!`);
       onImport(fileName, content, lang);
       setTimeout(() => { onClose(); setUrl(''); setUrlSuccess(''); }, 800);
