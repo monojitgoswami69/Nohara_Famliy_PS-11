@@ -1,12 +1,29 @@
-*, *::before, *::after {
-  box-sizing: border-box;
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-html, body, #root {
+body, html, #root {
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  background: #000;
+  background: white;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+h1 {
+  font-size: 2.5rem;
+  color: #333;
+  font-weight: 400;
+  letter-spacing: 0.5px;
 }
