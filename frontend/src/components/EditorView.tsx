@@ -123,18 +123,18 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <div className={`w-64 flex flex-col ${bg}`}>
-          <div className="px-2 pt-4 pb-2">
+          <div className="px-2 pt-4 pb-2 space-y-2">
             <div className="flex gap-2">
-              <button onClick={onFileCreate} className="flex-1 flex items-center justify-center gap-2 bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] py-2 rounded text-xs font-medium transition-colors shadow-sm">
+              <button onClick={onFileCreate} className="flex-1 flex items-center justify-center gap-2 bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95">
                 <Plus size={14} /> New Snippet
               </button>
-              <button onClick={() => fileInputRef.current?.click()} className={`flex items-center justify-center p-2 rounded border transition-colors ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-300'}`}>
+              <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center px-3 rounded-lg bg-[#CAA4F7]/20 hover:bg-[#CAA4F7]/30 text-[#CAA4F7] border border-[#CAA4F7]/30 transition-all active:scale-95 shadow-sm" title="Upload File">
                 <Upload size={14} />
               </button>
               <input type="file" ref={fileInputRef} className="hidden" accept=".js,.ts,.jsx,.tsx,.py,.cpp,.c,.java,.go,.rs,.rb,.php" onChange={handleFileUpload} />
             </div>
             <button onClick={onOpenGitHub}
-              className={`w-full flex items-center justify-center gap-2 py-2 rounded text-xs font-medium transition-all border ${isDark ? 'bg-[#232340] hover:bg-[#2a2a50] text-slate-300 border-slate-700/50 hover:border-purple-500/50' : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-300 hover:border-purple-400'}`}>
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all border ${isDark ? 'bg-[#232340] hover:bg-[#2a2a50] text-slate-300 border-slate-700/50 hover:border-purple-500/50' : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-300 hover:border-purple-400'} active:scale-[0.98] shadow-sm`}>
               <Github size={14} /> Import from GitHub
             </button>
           </div>
