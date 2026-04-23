@@ -4,7 +4,27 @@
 const GH_TOKEN_KEY = 'codecollab-github-token';
 const GH_USER_KEY = 'codecollab-github-user';
 const OAUTH_RESULT_KEY = 'codecollab-github-oauth-result';
-const API_BASE = '/api';
+const RAW_API_URL = (import.meta.env.VITE_API_URL || '').trim();
+const NORMALIZED_API_URL = RAW_API_URL.replace(/\/+$/, '');
+const API_BASE = NORMALIZED_API_URL
+  ? (NORMALIZED_API_URL.endsWith('/api') ? NORMALIZED_API_URL : `${NORMALIZED_API_URL}/api`)
+  : '/api';
+
+function isAbsoluteHttpUrl(url: string): boolean {
+  return url.startsWith('http://') || url.startsWith('https://');
+}
+
+function apiUrl(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE}${normalizedPath}`;
+}
+
+function getExpectedPopupOrigin(): string {
+  if (isAbsoluteHttpUrl(API_BASE)) {
+    return new URL(API_BASE).origin;
+  }
+  return window.location.origin;
+}
 
 interface OAuthPopupResult {
   type: 'github-oauth';
@@ -70,7 +90,12 @@ function authHeaders(token?: string | null): Record<string, string> {
  */
 export function startOAuthPopup(): Promise<string> {
   return new Promise((resolve, reject) => {
-    localStorage.removeItem(OAUTH_RESULT_KEY);
+    const expectedPopupOrigin = getExpectedPopupOrigin();
+    const allowStorageFallback = expectedPopupOrigin === window.location.origin;
+
+    if (allowStorageFallback) {
+      localStorage.removeItem(OAUTH_RESULT_KEY);
+    }
 
     const width = 500;
     const height = 700;
@@ -78,7 +103,7 @@ export function startOAuthPopup(): Promise<string> {
     const top = window.screenY + (window.outerHeight - height) / 2;
 
     const popup = window.open(
-      `${API_BASE}/auth/github`,
+      apiUrl('/auth/github'),
       'github-oauth',
       `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
     );
@@ -106,6 +131,7 @@ export function startOAuthPopup(): Promise<string> {
     };
 
     const completeFromStorage = () => {
+      if (!allowStorageFallback) return false;
       const raw = localStorage.getItem(OAUTH_RESULT_KEY);
       if (!raw) return false;
       try {
@@ -131,6 +157,7 @@ export function startOAuthPopup(): Promise<string> {
     const handler = (event: MessageEvent) => {
       // Accept only messages from the popup we opened.
       if (event.source !== popup) return;
+      if (event.origin !== expectedPopupOrigin) return;
       if (!isOAuthPopupResult(event.data)) return;
       complete(event.data);
     };
@@ -150,7 +177,7 @@ export function startOAuthPopup(): Promise<string> {
     // Poll for popup closed without completing auth
     pollTimer = window.setInterval(() => {
       if (popup.closed) {
-        if (completeFromStorage()) return;
+        if (allowStorageFallback && completeFromStorage()) return;
         if (completed) return;
         completed = true;
         cleanup();
@@ -159,14 +186,16 @@ export function startOAuthPopup(): Promise<string> {
     }, 500);
 
     window.addEventListener('message', handler);
-    window.addEventListener('storage', storageHandler);
+    if (allowStorageFallback) {
+      window.addEventListener('storage', storageHandler);
+    }
   });
 }
 
 // ─── Validate Token / Get User ─────────────────────────────────────────
 
 export async function fetchGitHubUser(token: string): Promise<GitHubUser> {
-  const res = await fetch(`${API_BASE}/github/user`, {
+  const res = await fetch(apiUrl('/github/user'), {
     headers: authHeaders(token),
   });
   if (!res.ok) throw new Error('Failed to fetch GitHub user. Token may be invalid.');
@@ -198,7 +227,7 @@ export async function listRepos(
     per_page: String(perPage),
     sort,
   });
-  const res = await fetch(`${API_BASE}/github/repos?${params}`, {
+  const res = await fetch(`${apiUrl('/github/repos')}?${params}`, {
     headers: authHeaders(token),
   });
   if (!res.ok) throw new Error('Failed to fetch repositories.');
@@ -225,7 +254,7 @@ export async function getRepoContents(
   const params = new URLSearchParams();
   if (path) params.set('path', path);
   const res = await fetch(
-    `${API_BASE}/github/repos/${owner}/${repo}/contents?${params}`,
+    `${apiUrl(`/github/repos/${owner}/${repo}/contents`)}?${params}`,
     { headers: authHeaders(token) }
   );
   if (!res.ok) throw new Error(`Failed to fetch contents for ${owner}/${repo}/${path}`);
@@ -241,7 +270,7 @@ export async function fetchFileContent(
   token?: string | null
 ): Promise<string> {
   const params = new URLSearchParams({ url: downloadUrl });
-  const res = await fetch(`${API_BASE}/github/file?${params}`, {
+  const res = await fetch(`${apiUrl('/github/file')}?${params}`, {
     headers: authHeaders(token),
   });
   if (!res.ok) throw new Error('Failed to fetch file content.');
@@ -270,7 +299,7 @@ export async function fetchRepoTree(
   branch: string
 ): Promise<RepoTree> {
   const res = await fetch(
-    `${API_BASE}/github/repos/${owner}/${repo}/tree/${branch}`,
+    apiUrl(`/github/repos/${owner}/${repo}/tree/${branch}`),
     { headers: authHeaders(token) }
   );
   if (!res.ok) throw new Error(`Failed to fetch repo tree for ${owner}/${repo}`);
@@ -290,7 +319,7 @@ export async function fetchRawContent(
 ): Promise<string> {
   const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
   const params = new URLSearchParams({ url: rawUrl });
-  const res = await fetch(`${API_BASE}/github/file?${params}`, {
+  const res = await fetch(`${apiUrl('/github/file')}?${params}`, {
     headers: authHeaders(token),
   });
   if (!res.ok) throw new Error('Failed to fetch file content.');

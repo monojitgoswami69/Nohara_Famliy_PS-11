@@ -13,11 +13,13 @@ from routers import auth, github  # noqa: E402
 
 app = FastAPI(title="CodeCollab API", version="1.0.0")
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+FRONTEND_ORIGINS = os.getenv("FRONTEND_ORIGINS", FRONTEND_URL)
+ALLOWED_ORIGINS = [origin.strip().rstrip("/") for origin in FRONTEND_ORIGINS.split(",") if origin.strip()] or [FRONTEND_URL]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

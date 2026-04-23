@@ -11,7 +11,7 @@ Flow:
 """
 
 import os
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 import httpx
 from fastapi import APIRouter, HTTPException
@@ -19,9 +19,18 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 router = APIRouter()
 
+
+def _to_origin(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return url.rstrip("/")
+
 CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "")
 CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+FRONTEND_ORIGIN = _to_origin(FRONTEND_URL)
+BACKEND_PUBLIC_URL = os.getenv("BACKEND_PUBLIC_URL", "").rstrip("/")
 
 GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
@@ -37,10 +46,11 @@ def github_login():
     if not CLIENT_ID:
         raise HTTPException(500, "GITHUB_CLIENT_ID not configured")
 
+    redirect_base = BACKEND_PUBLIC_URL or FRONTEND_URL
     params = urlencode({
         "client_id": CLIENT_ID,
         "scope": SCOPES,
-        "redirect_uri": f"{FRONTEND_URL}/api/auth/github/callback",
+        "redirect_uri": f"{redirect_base}/api/auth/github/callback",
     })
     return RedirectResponse(f"{GITHUB_AUTHORIZE_URL}?{params}")
 
@@ -112,7 +122,7 @@ def _post_message_html(token: str | None, error: str | None) -> str:
     }}
 
   if (window.opener) {{
-        window.opener.postMessage(payload, "*");
+      window.opener.postMessage(payload, "{FRONTEND_ORIGIN}");
   }}
   window.close();
 </script>
