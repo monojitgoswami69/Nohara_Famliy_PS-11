@@ -8,3 +8,6 @@ backend/venv/
 backend/.env
 __pycache__/
 *.pyc
+
+# Socket Backend
+backend-socket/node_modules/

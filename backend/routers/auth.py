@@ -121,10 +121,19 @@ def _post_message_html(token: str | None, error: str | None) -> str:
         // Ignore storage failures (private mode / disabled storage).
     }}
 
+    const sendResult = () => {{
+        if (!window.opener) return;
+        window.opener.postMessage(payload, "{FRONTEND_ORIGIN}");
+    }};
+
   if (window.opener) {{
-      window.opener.postMessage(payload, "{FRONTEND_ORIGIN}");
+            // Send a few times and close slightly later to avoid first-time popup race conditions.
+            sendResult();
+            window.setTimeout(sendResult, 50);
+            window.setTimeout(sendResult, 150);
   }}
-  window.close();
+
+    window.setTimeout(() => window.close(), 300);
 </script>
 </body>
 </html>"""

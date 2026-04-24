@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { loader } from '@monaco-editor/react';
 import { EditorView } from './components/EditorView';
 import { ThemeContext, useThemeProvider } from './hooks/useTheme';
@@ -9,6 +9,8 @@ import {
 import { detectLanguage, detectLanguageAI } from './utils/detectLanguage';
 import { fetchRawContent, getStoredToken, GitHubRepo, RepoTreeItem } from './services/githubService';
 import { GitHubImportModal } from './components/GitHubImportModal';
+import { CollabRoomModal } from './components/CollabRoomModal';
+import { useCollabRoom } from './hooks/useCollabRoom';
 
 // Configure Monaco CDN path — @monaco-editor/react handles init internally
 loader.config({
@@ -25,6 +27,35 @@ export const App: React.FC = () => {
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [showGitHubModal, setShowGitHubModal] = useState(false);
+  const [showCollabModal, setShowCollabModal] = useState(false);
+
+  // ─── Collab Room ─────────────────────────────────────────────────────
+  const collab = useCollabRoom();
+  const autoSharedRef = useRef(false);
+
+  // Auto-share the active file when host creates a room
+  useEffect(() => {
+    if (
+      collab.isHost &&
+      collab.status === 'connected' &&
+      collab.sharedFiles.length === 0 &&
+      !autoSharedRef.current
+    ) {
+      const file = activeFileId ? files.find(f => f.id === activeFileId) : null;
+      if (file) {
+        autoSharedRef.current = true;
+        collab.shareFile({
+          id: file.id,
+          name: file.name,
+          language: file.language,
+          content: file.content,
+        });
+      }
+    }
+    if (collab.status === 'disconnected') {
+      autoSharedRef.current = false;
+    }
+  }, [collab.isHost, collab.status, collab.sharedFiles.length, activeFileId, files]);
 
   useEffect(() => {
     const stored = getStoredFiles();
@@ -225,13 +256,21 @@ export const App: React.FC = () => {
           onCodeChange={handleCodeChange}
           onLanguageChange={handleLanguageChange}
           onOpenGitHub={() => setShowGitHubModal(true)}
+          onOpenCollab={() => setShowCollabModal(true)}
           onRepoDelete={handleRepoDelete}
+          collab={collab}
         />
         <GitHubImportModal
           isOpen={showGitHubModal}
           onClose={() => setShowGitHubModal(false)}
           onImport={handleGitHubImport}
           onImportRepo={handleRepoImport}
+        />
+        <CollabRoomModal
+          isOpen={showCollabModal}
+          onClose={() => setShowCollabModal(false)}
+          onCreateRoom={(name, id) => { collab.createRoom(name, id); setShowCollabModal(false); }}
+          onJoinRoom={(name, id) => { collab.joinRoom(name, id); setShowCollabModal(false); }}
         />
       </div>
     </ThemeContext.Provider>

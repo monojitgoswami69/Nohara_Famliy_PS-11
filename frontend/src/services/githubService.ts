@@ -19,6 +19,12 @@ function apiUrl(path: string): string {
   return `${API_BASE}${normalizedPath}`;
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
 function getExpectedPopupOrigin(): string {
   if (isAbsoluteHttpUrl(API_BASE)) {
     return new URL(API_BASE).origin;
@@ -92,6 +98,7 @@ export function startOAuthPopup(): Promise<string> {
   return new Promise((resolve, reject) => {
     const expectedPopupOrigin = getExpectedPopupOrigin();
     const allowStorageFallback = expectedPopupOrigin === window.location.origin;
+    const popupCloseGraceMs = 1500;
 
     if (allowStorageFallback) {
       localStorage.removeItem(OAUTH_RESULT_KEY);
@@ -115,6 +122,7 @@ export function startOAuthPopup(): Promise<string> {
 
     let completed = false;
     let pollTimer: number | undefined;
+  let popupClosedAt: number | null = null;
 
     const complete = (payload: OAuthPopupResult) => {
       if (completed) return;
@@ -156,7 +164,7 @@ export function startOAuthPopup(): Promise<string> {
 
     const handler = (event: MessageEvent) => {
       // Accept only messages from the popup we opened.
-      if (event.source !== popup) return;
+      if (event.source !== popup && event.source !== null) return;
       if (event.origin !== expectedPopupOrigin) return;
       if (!isOAuthPopupResult(event.data)) return;
       complete(event.data);
@@ -177,7 +185,13 @@ export function startOAuthPopup(): Promise<string> {
     // Poll for popup closed without completing auth
     pollTimer = window.setInterval(() => {
       if (popup.closed) {
+        if (popupClosedAt === null) {
+          popupClosedAt = Date.now();
+          return;
+        }
+
         if (allowStorageFallback && completeFromStorage()) return;
+        if (Date.now() - popupClosedAt < popupCloseGraceMs) return;
         if (completed) return;
         completed = true;
         cleanup();
@@ -195,11 +209,27 @@ export function startOAuthPopup(): Promise<string> {
 // ─── Validate Token / Get User ─────────────────────────────────────────
 
 export async function fetchGitHubUser(token: string): Promise<GitHubUser> {
-  const res = await fetch(apiUrl('/github/user'), {
-    headers: authHeaders(token),
-  });
-  if (!res.ok) throw new Error('Failed to fetch GitHub user. Token may be invalid.');
-  return res.json();
+  const maxAttempts = 2;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const res = await fetch(apiUrl('/github/user'), {
+      headers: authHeaders(token),
+    });
+
+    if (res.ok) {
+      return res.json();
+    }
+
+    const retriable = res.status === 401 || res.status === 403 || res.status >= 500;
+    if (retriable && attempt < maxAttempts) {
+      await delay(300);
+      continue;
+    }
+
+    throw new Error('Failed to fetch GitHub user. Token may be invalid.');
+  }
+
+  throw new Error('Failed to fetch GitHub user. Token may be invalid.');
 }
 
 // ─── Repos ─────────────────────────────────────────────────────────────

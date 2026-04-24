@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { StoredFile } from '../services/storageService';
+import { SharedFileInfo } from '../services/collabService';
 import { useTheme } from '../hooks/useTheme';
 import {
   FileCode, FolderOpen, FolderClosed, ChevronRight, ChevronDown,
-  Trash2, Loader2, Package
+  Trash2, Loader2, Package, Users, Plus, Minus
 } from 'lucide-react';
 import {
   JavaScript, TypeScript, Python, CPlusPlus, C, Java, Go, RustDark, Ruby, PHP
@@ -15,9 +16,9 @@ interface TreeNode {
   name: string;
   path: string;
   children: Map<string, TreeNode>;
-  fileId?: string;       // present for file nodes
+  fileId?: string;
   isDir: boolean;
-  repoKey?: string;      // e.g. "owner/repo"
+  repoKey?: string;
 }
 
 // ─── Language Icons ────────────────────────────────────────────────────
@@ -41,7 +42,6 @@ function LangIcon({ language, size = 14 }: { language: string; size?: number }) 
 function buildTree(files: StoredFile[]): TreeNode {
   const root: TreeNode = { name: '', path: '', children: new Map(), isDir: true };
 
-  // Group: repo files go under "owner/repo", standalone snippets go under "Snippets"
   for (const file of files) {
     const groupName = file.repoOrigin
       ? `${file.repoOrigin.owner}/${file.repoOrigin.repo}`
@@ -77,28 +77,79 @@ function buildTree(files: StoredFile[]): TreeNode {
   return root;
 }
 
-// ─── Props ─────────────────────────────────────────────────────────────
+// ─── Context Menu ──────────────────────────────────────────────────────
 
-interface FileExplorerProps {
-  files: StoredFile[];
-  activeFileId: string | null;
-  loadingFileId: string | null;
-  onFileSelect: (id: string) => void;
-  onFileDelete: (id: string) => void;
-  onRepoDelete?: (repoKey: string) => void;
+interface ContextMenuState {
+  x: number;
+  y: number;
+  fileId: string;
+  isInCollab: boolean;
+}
+
+function ContextMenu({
+  state, onClose, onAddToCollab, onRemoveFromCollab, isDark,
+}: {
+  state: ContextMenuState;
+  onClose: () => void;
+  onAddToCollab: (fileId: string) => void;
+  onRemoveFromCollab: (fileId: string) => void;
+  isDark: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      className={`fixed z-[100] rounded-lg shadow-xl border py-1 min-w-[180px] animate-fade-in ${
+        isDark
+          ? 'bg-[#232340] border-slate-700/60 text-slate-200'
+          : 'bg-white border-slate-200 text-slate-700'
+      }`}
+      style={{ left: state.x, top: state.y }}
+    >
+      {state.isInCollab ? (
+        <button
+          onClick={() => { onRemoveFromCollab(state.fileId); onClose(); }}
+          className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
+            isDark ? 'hover:bg-red-500/15 text-red-400' : 'hover:bg-red-50 text-red-500'
+          }`}
+        >
+          <Minus size={13} /> Remove from Collab
+        </button>
+      ) : (
+        <button
+          onClick={() => { onAddToCollab(state.fileId); onClose(); }}
+          className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
+            isDark ? 'hover:bg-orange-500/15 text-orange-400' : 'hover:bg-orange-50 text-orange-600'
+          }`}
+        >
+          <Plus size={13} /> Add to Collab
+        </button>
+      )}
+    </div>
+  );
 }
 
 // ─── Tree Node Renderer ───────────────────────────────────────────────
 
 function TreeItem({
   node, depth, activeFileId, loadingFileId, onFileSelect, onFileDelete, onRepoDelete,
-  expandedPaths, toggleExpand, files, isDark
+  onContextMenu, expandedPaths, toggleExpand, files, isDark, isCollabSection,
 }: {
   node: TreeNode; depth: number; activeFileId: string | null; loadingFileId: string | null;
   onFileSelect: (id: string) => void; onFileDelete: (id: string) => void;
   onRepoDelete?: (repoKey: string) => void;
+  onContextMenu?: (e: React.MouseEvent, fileId: string, isInCollab: boolean) => void;
   expandedPaths: Set<string>; toggleExpand: (path: string) => void;
-  files: StoredFile[]; isDark: boolean;
+  files: StoredFile[]; isDark: boolean; isCollabSection?: boolean;
 }) {
   const isExpanded = expandedPaths.has(node.path);
   const isActive = node.fileId === activeFileId;
@@ -106,7 +157,6 @@ function TreeItem({
   const isRepoRoot = depth === 0 && node.repoKey;
   const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
 
-  // Find the stored file for language info
   const storedFile = node.fileId ? files.find(f => f.id === node.fileId) : null;
 
   if (node.isDir) {
@@ -119,7 +169,7 @@ function TreeItem({
       <div>
         <button
           onClick={() => toggleExpand(node.path)}
-          className={`w-full flex items-center gap-1.5 py-1 pr-2 rounded transition-colors group ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-slate-100'}`}
+          className={`w-full flex items-center gap-1.5 py-1 pr-2 rounded group transition-all duration-150 ease-out ${isDark ? 'hover:bg-slate-800/50 hover:translate-x-[1px]' : 'hover:bg-slate-100 hover:translate-x-[1px]'}`}
           style={{ paddingLeft: `${depth * 12 + 8}px` }}
         >
           {isExpanded
@@ -149,9 +199,9 @@ function TreeItem({
             key={child.path} node={child} depth={depth + 1}
             activeFileId={activeFileId} loadingFileId={loadingFileId}
             onFileSelect={onFileSelect} onFileDelete={onFileDelete}
-            onRepoDelete={onRepoDelete}
+            onRepoDelete={onRepoDelete} onContextMenu={onContextMenu}
             expandedPaths={expandedPaths} toggleExpand={toggleExpand}
-            files={files} isDark={isDark}
+            files={files} isDark={isDark} isCollabSection={isCollabSection}
           />
         ))}
       </div>
@@ -162,10 +212,20 @@ function TreeItem({
   return (
     <button
       onClick={() => node.fileId && onFileSelect(node.fileId)}
-      className={`w-full flex items-center gap-1.5 py-1 pr-2 rounded transition-colors group ${
+      onContextMenu={(e) => {
+        if (onContextMenu && node.fileId) {
+          e.preventDefault();
+          onContextMenu(e, node.fileId, !!isCollabSection);
+        }
+      }}
+      className={`w-full flex items-center gap-1.5 py-1 pr-2 rounded group transition-all duration-150 ease-out ${
         isActive
-          ? isDark ? 'bg-slate-800 text-blue-400 border border-slate-700/50' : 'bg-blue-50 text-blue-600 border border-blue-200'
-          : isDark ? 'text-slate-400 hover:bg-slate-800/40' : 'text-slate-600 hover:bg-slate-50'
+          ? isDark
+            ? 'bg-slate-800/80 text-blue-400'
+            : 'bg-blue-50/80 text-blue-600'
+          : isDark
+            ? 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-300 hover:translate-x-[1px]'
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800 hover:translate-x-[1px]'
       }`}
       style={{ paddingLeft: `${depth * 12 + 8}px` }}
     >
@@ -174,7 +234,7 @@ function TreeItem({
         : <LangIcon language={storedFile?.language || ''} size={13} />
       }
       <span className="text-[13px] truncate">{node.name}</span>
-      {!node.repoKey && (
+      {!isCollabSection && !node.repoKey && (
         <button
           onClick={e => { e.stopPropagation(); node.fileId && onFileDelete(node.fileId); }}
           className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-400 p-0.5 transition-opacity"
@@ -186,17 +246,46 @@ function TreeItem({
   );
 }
 
+// ─── Props ─────────────────────────────────────────────────────────────
+
+interface FileExplorerProps {
+  files: StoredFile[];
+  activeFileId: string | null;
+  loadingFileId: string | null;
+  onFileSelect: (id: string) => void;
+  onFileDelete: (id: string) => void;
+  onRepoDelete?: (repoKey: string) => void;
+  // Collab
+  isInRoom: boolean;
+  isHost: boolean;
+  sharedFiles: SharedFileInfo[];
+  collabFileContents: Map<string, StoredFile>;
+  onAddToCollab?: (fileId: string) => void;
+  onRemoveFromCollab?: (fileId: string) => void;
+  onSelectCollabFile?: (fileId: string) => void;
+}
+
 // ─── Main Component ────────────────────────────────────────────────────
 
 export const FileExplorer: React.FC<FileExplorerProps> = ({
   files, activeFileId, loadingFileId, onFileSelect, onFileDelete, onRepoDelete,
+  isInRoom, isHost, sharedFiles, collabFileContents,
+  onAddToCollab, onRemoveFromCollab, onSelectCollabFile,
 }) => {
   const { isDark } = useTheme();
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
-  const tree = useMemo(() => buildTree(files), [files]);
+  // Build tree from non-collab files only
+  const localFiles = useMemo(() => {
+    if (!isInRoom) return files;
+    const sharedIds = new Set(sharedFiles.map(f => f.id));
+    return files.filter(f => !sharedIds.has(f.id));
+  }, [files, isInRoom, sharedFiles]);
 
-  // Auto-expand repo roots on first render
+  const tree = useMemo(() => buildTree(localFiles), [localFiles]);
+
+  // Auto-expand repo roots
   useMemo(() => {
     const newExpanded = new Set(expandedPaths);
     tree.children.forEach((child) => {
@@ -218,24 +307,122 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     });
   };
 
+  const handleContextMenu = (e: React.MouseEvent, fileId: string, isInCollab: boolean) => {
+    if (!isInRoom || !isHost) return;
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, fileId, isInCollab });
+  };
+
   const sortedChildren = Array.from(tree.children.values()).sort((a, b) => {
-    // Repos first, then standalone files
     if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
 
+  // Build collab file tree for the collab section
+  const collabFiles = useMemo(() => {
+    return sharedFiles.map(sf => {
+      const local = collabFileContents.get(sf.id);
+      return {
+        ...sf,
+        storedFile: local || { id: sf.id, name: sf.name, language: sf.language, content: '', contentHash: '', lastModified: Date.now() } as StoredFile,
+      };
+    });
+  }, [sharedFiles, collabFileContents]);
+
   return (
     <div className="space-y-0.5 text-sm">
+      {/* ── Collab Section ───────────────────────────────────────── */}
+      {isInRoom && sharedFiles.length > 0 && (
+        <div className="mb-3">
+          {/* Collab header */}
+          <div className={`flex items-center gap-2 px-2 py-1.5 rounded-md mb-1 ${
+            isDark ? 'bg-orange-500/10' : 'bg-orange-50'
+          }`}>
+            <Users size={13} className="text-orange-400" />
+            <span className="text-[11px] font-bold tracking-wide uppercase text-orange-400">
+              Collab
+            </span>
+            <span className={`text-[10px] ml-auto ${isDark ? 'text-orange-400/60' : 'text-orange-500/50'}`}>
+              {sharedFiles.length} file{sharedFiles.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          {/* Collab files */}
+          <div className="relative rounded-md overflow-hidden">
+            <div className="pl-1">
+              {collabFiles.map(cf => (
+                <button
+                  key={cf.id}
+                  onClick={() => onSelectCollabFile?.(cf.id)}
+                  onContextMenu={(e) => {
+                    if (isHost) {
+                      e.preventDefault();
+                      setContextMenu({ x: e.clientX, y: e.clientY, fileId: cf.id, isInCollab: true });
+                    }
+                  }}
+                  className={`w-full flex items-center gap-1.5 py-1.5 pr-2 pl-3 rounded group transition-all duration-150 ease-out ${
+                    activeFileId === cf.id
+                      ? isDark
+                        ? 'bg-slate-800/80 text-blue-400'
+                        : 'bg-blue-50/80 text-blue-600'
+                      : isDark
+                        ? 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-300 hover:translate-x-[1px]'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800 hover:translate-x-[1px]'
+                  }`}
+
+                >
+                  <LangIcon language={cf.language} size={13} />
+                  <span className="text-[13px] truncate">{cf.name}</span>
+                  {isHost && (
+                    <button
+                      onClick={e => { e.stopPropagation(); onRemoveFromCollab?.(cf.id); }}
+                      className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-400 p-0.5 transition-opacity"
+                      title="Remove from collab"
+                    >
+                      <Minus size={11} />
+                    </button>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Regular Files Section ────────────────────────────────── */}
+      {isInRoom && sharedFiles.length > 0 && localFiles.length > 0 && (
+        <>
+          <div className={`border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'} my-2`} />
+          <div className={`flex items-center gap-2 px-2 py-1 mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className="text-[11px] font-bold tracking-wide uppercase">
+              My Files
+            </span>
+          </div>
+        </>
+      )}
+
       {sortedChildren.map(child => (
         <TreeItem
           key={child.path} node={child} depth={0}
           activeFileId={activeFileId} loadingFileId={loadingFileId}
           onFileSelect={onFileSelect} onFileDelete={onFileDelete}
           onRepoDelete={onRepoDelete}
+          onContextMenu={isInRoom && isHost ? handleContextMenu : undefined}
           expandedPaths={expandedPaths} toggleExpand={toggleExpand}
           files={files} isDark={isDark}
         />
       ))}
+
+      {/* ── Context Menu ─────────────────────────────────────────── */}
+      {contextMenu && (
+        <ContextMenu
+          state={contextMenu}
+          onClose={() => setContextMenu(null)}
+          onAddToCollab={(fileId) => onAddToCollab?.(fileId)}
+          onRemoveFromCollab={(fileId) => onRemoveFromCollab?.(fileId)}
+          isDark={isDark}
+        />
+      )}
     </div>
   );
 };
