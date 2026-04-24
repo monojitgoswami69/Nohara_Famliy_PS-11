@@ -219,6 +219,19 @@ export const CollabMonacoEditor: React.FC<Props> = ({
     if (provider.status === 'connected') {
       bindToFile(editor, provider);
     }
+
+    // Fix minimap lag during CSS transitions
+    const container = editor.getContainerDomNode().parentElement;
+    if (container) {
+      const ro = new ResizeObserver(() => {
+        editor.layout();
+      });
+      ro.observe(container);
+      
+      editor.onDidDispose(() => {
+        ro.disconnect();
+      });
+    }
   };
 
   // ── Bind to the current file's DocConnection ──────────────────────────

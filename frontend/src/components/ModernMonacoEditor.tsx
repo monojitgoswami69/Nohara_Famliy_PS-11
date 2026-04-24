@@ -143,6 +143,19 @@ export const ModernMonacoEditor: React.FC<ModernMonacoEditorProps> = ({
                 }
             }
         });
+        // Fix minimap lag during CSS transitions
+        const container = editor.getContainerDomNode().parentElement;
+        if (container) {
+            const ro = new ResizeObserver(() => {
+                editor.layout();
+            });
+            ro.observe(container);
+            
+            // Clean up the observer when editor is disposed
+            editor.onDidDispose(() => {
+                ro.disconnect();
+            });
+        }
     };
 
     const handleEditorChange = (value: string | undefined) => {

@@ -68,11 +68,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       <div 
         className={`flex flex-col h-full w-[280px] sm:w-[300px] border-l ${borderColor} ${panelBg} shadow-2xl md:shadow-none`}
         style={{
-          transform: isOpen ? 'translate3d(0, 0, 0)' : 'translate3d(100%, 0, 0)',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           opacity: isOpen ? 1 : 0,
           transition: 'transform 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 200ms ease',
           willChange: 'transform, opacity',
-          backfaceVisibility: 'hidden',
         }}
       >
         {/* Header */}
