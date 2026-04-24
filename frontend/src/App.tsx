@@ -57,6 +57,13 @@ export const App: React.FC = () => {
     }
   }, [collab.isHost, collab.status, collab.sharedFiles.length, activeFileId, files]);
 
+  // Auto-close the collab modal once join succeeds
+  useEffect(() => {
+    if (showCollabModal && (collab.status === 'waiting-approval' || collab.status === 'connected')) {
+      setShowCollabModal(false);
+    }
+  }, [collab.status, showCollabModal]);
+
   useEffect(() => {
     const stored = getStoredFiles();
     const storedActive = getActiveFileId();
@@ -268,9 +275,11 @@ export const App: React.FC = () => {
         />
         <CollabRoomModal
           isOpen={showCollabModal}
-          onClose={() => setShowCollabModal(false)}
+          onClose={() => { setShowCollabModal(false); collab.clearJoinError(); }}
           onCreateRoom={(name, id) => { collab.createRoom(name, id); setShowCollabModal(false); }}
-          onJoinRoom={(name, id) => { collab.joinRoom(name, id); setShowCollabModal(false); }}
+          onJoinRoom={(name, id) => { collab.joinRoom(name, id); }}
+          joinError={collab.joinError}
+          onClearJoinError={collab.clearJoinError}
         />
       </div>
     </ThemeContext.Provider>

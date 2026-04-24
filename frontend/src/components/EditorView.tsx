@@ -8,7 +8,7 @@ import { SharedFileInfo } from '../services/collabService';
 import { useTheme } from '../hooks/useTheme';
 import { detectLanguage, detectLanguageAI } from '../utils/detectLanguage';
 import {
-  FileCode, Plus, Upload, Code2, FolderOpen, Sun, Moon, Github, Users
+  FileCode, Plus, Upload, Code2, FolderOpen, Sun, Moon, Github, Users, X
 } from 'lucide-react';
 import {
   JavaScript, TypeScript, Python, CPlusPlus, C, Java, Go, RustDark, Ruby, PHP
@@ -208,7 +208,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
               onClick={onOpenCollab}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#CAA4F7]/15 hover:bg-[#CAA4F7]/25 text-[#CAA4F7] text-xs font-bold transition-all active:scale-95 border border-[#CAA4F7]/20"
             >
-              <Users size={14} /> Live Room
+              <Users size={14} /> Collab
             </button>
           )}
 
@@ -280,7 +280,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
               {/* Waiting overlay */}
               {collab.status === 'waiting-approval' && (
                 <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center ${isDark ? 'bg-[#1e1e2e]/90' : 'bg-[#eff1f5]/90'} backdrop-blur-sm`}>
-                  <div className="animate-spin mb-4">
+                  <div className="mb-4">
                     <Users size={32} className="text-[#CAA4F7]" />
                   </div>
                   <p className={`text-sm font-medium ${textPrimary}`}>Waiting for host approval...</p>
@@ -362,6 +362,28 @@ export const EditorView: React.FC<EditorViewProps> = ({
           onLeave={collab.leaveRoom}
           onDismissToast={collab.dismissToast}
         />
+      )}
+
+      {/* Collab toasts — always rendered so rejection/error toasts are visible */}
+      {collab.toasts.length > 0 && (
+        <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+          {collab.toasts.map(toast => (
+            <div
+              key={toast.id}
+              className={`pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium animate-fade-in-up ${
+                toast.type === 'error' ? 'bg-red-500/90 text-white' :
+                toast.type === 'success' ? 'bg-green-500/90 text-white' :
+                toast.type === 'warning' ? 'bg-amber-500/90 text-white' :
+                isDark ? 'bg-[#2a2a50] text-white border border-slate-600/50' : 'bg-white text-slate-900 border border-slate-200 shadow-md'
+              }`}
+            >
+              <span>{toast.message}</span>
+              <button onClick={() => collab.dismissToast(toast.id)} className="ml-1 opacity-60 hover:opacity-100 transition-opacity">
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

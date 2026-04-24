@@ -41,6 +41,8 @@ export function useCollabRoom() {
     toasts: [],
   });
 
+  const [joinError, setJoinError] = useState<string | null>(null);
+
   const providerRef = useRef<CollabProvider | null>(null);
 
   // ── Toast helpers ────────────────────────────────────────────────────
@@ -91,7 +93,43 @@ export function useCollabRoom() {
       addToast('You are now the host', 'success');
     },
     onError: (msg: string) => {
+      const prov = providerRef.current;
+      const isRoomNotFound = msg.toLowerCase().includes('does not exist');
+
+      if (prov && !prov.isHost && isRoomNotFound) {
+        // Room doesn't exist — surface as joinError in the modal
+        setJoinError(msg);
+        prov.destroy();
+        providerRef.current = null;
+        setState(prev => ({
+          ...prev,
+          status: 'disconnected',
+          roomId: null,
+          isHost: false,
+          members: [],
+          pending: [],
+          sharedFiles: [],
+          provider: null,
+        }));
+        return;
+      }
+
+      // Rejection or other errors — show toast and clean up
       addToast(msg, 'error');
+      if (prov && !prov.isHost) {
+        prov.destroy();
+        providerRef.current = null;
+        setState(prev => ({
+          ...prev,
+          status: 'disconnected',
+          roomId: null,
+          isHost: false,
+          members: [],
+          pending: [],
+          sharedFiles: [],
+          provider: null,
+        }));
+      }
     },
     onRoomClosed: () => {
       addToast('Room was closed by the host', 'error');
@@ -158,6 +196,7 @@ export function useCollabRoom() {
 
   const joinRoom = useCallback((displayName: string, roomId: string) => {
     providerRef.current?.destroy();
+    setJoinError(null);
 
     const color = getRandomColor();
     const provider = new CollabProvider(roomId, displayName, color, events);
@@ -227,6 +266,8 @@ export function useCollabRoom() {
 
   return {
     ...state,
+    joinError,
+    clearJoinError: useCallback(() => setJoinError(null), []),
     createRoom,
     joinRoom,
     leaveRoom,

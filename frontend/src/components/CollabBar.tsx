@@ -28,8 +28,8 @@ interface Props {
 }
 
 export const CollabBar: React.FC<Props> = ({
-  roomId, status, isHost, members, pending, toasts,
-  onApprove, onReject, onLeave, onDismissToast,
+  roomId, status, isHost, members, pending,
+  onApprove, onReject, onLeave,
 }) => {
   const { isDark } = useTheme();
   const [copied, setCopied] = useState(false);
@@ -43,10 +43,10 @@ export const CollabBar: React.FC<Props> = ({
 
   const statusIcon = () => {
     switch (status) {
-      case 'connected': return <Wifi size={12} className="text-green-400" />;
+      case 'connected': return <Wifi size={15} className="text-green-400" />;
       case 'connecting':
-      case 'waiting-approval': return <Loader2 size={12} className="animate-spin text-yellow-400" />;
-      default: return <WifiOff size={12} className="text-red-400" />;
+      case 'waiting-approval': return <Loader2 size={15} className="animate-spin text-yellow-400" />;
+      default: return <WifiOff size={15} className="text-red-400" />;
     }
   };
 
@@ -69,42 +69,22 @@ export const CollabBar: React.FC<Props> = ({
 
   return (
     <>
-      {/* ── Toast notifications ───────────────────────────────────────── */}
-      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
-        {toasts.map(toast => (
-          <div
-            key={toast.id}
-            className={`pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium animate-fade-in-up ${
-              toast.type === 'error' ? 'bg-red-500/90 text-white' :
-              toast.type === 'success' ? 'bg-green-500/90 text-white' :
-              toast.type === 'warning' ? 'bg-amber-500/90 text-white' :
-              isDark ? 'bg-[#2a2a50] text-white border border-slate-600/50' : 'bg-white text-slate-900 border border-slate-200 shadow-md'
-            }`}
-          >
-            <span>{toast.message}</span>
-            <button onClick={() => onDismissToast(toast.id)} className="ml-1 opacity-60 hover:opacity-100 transition-opacity">
-              <X size={12} />
-            </button>
-          </div>
-        ))}
-      </div>
-
       {/* ── Collab status bar ─────────────────────────────────────────── */}
-      <div className={`h-9 flex items-center justify-between px-3 text-[11px] kode-font font-bold ${bg} ${isDark ? 'text-white/80' : 'text-slate-600'} border-t ${border} relative`}>
+      <div className={`h-11 flex items-center justify-between px-4 text-[13px] kode-font font-bold ${bg} ${isDark ? 'text-white/80' : 'text-slate-600'} border-t ${border} relative`}>
         <div className="flex items-center gap-3">
           {/* Status */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {statusIcon()}
             <span>{statusLabel()}</span>
           </div>
 
           {/* Room ID */}
-          <button onClick={handleCopy} className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#CAA4F7]/15 text-[#CAA4F7] hover:bg-[#CAA4F7]/25 transition-colors" title="Copy Room ID">
+          <button onClick={handleCopy} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#CAA4F7]/15 text-[#CAA4F7] hover:bg-[#CAA4F7]/25 transition-colors" title="Copy Room ID">
             <span className="tracking-widest">{roomId}</span>
-            {copied ? <Check size={10} /> : <Copy size={10} />}
+            {copied ? <Check size={13} /> : <Copy size={13} />}
           </button>
 
-          {isHost && <Crown size={12} className="text-amber-400" />}
+          {isHost && <Crown size={15} className="text-amber-400" />}
         </div>
 
         <div className="flex items-center gap-3">
@@ -117,7 +97,7 @@ export const CollabBar: React.FC<Props> = ({
               {members.slice(0, 5).map(m => (
                 <div
                   key={m.peerId}
-                  className="w-5 h-5 rounded-full border-2 flex items-center justify-center text-[8px] font-bold text-white"
+                  className="w-6 h-6 rounded-full border-2 flex items-center justify-center text-[9px] font-bold text-white"
                   style={{ backgroundColor: m.color, borderColor: isDark ? '#12121c' : '#d0d4dc' }}
                   title={m.displayName}
                 >
@@ -125,17 +105,17 @@ export const CollabBar: React.FC<Props> = ({
                 </div>
               ))}
               {members.length > 5 && (
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-[8px] font-bold ${isDark ? 'bg-slate-700 border-[#12121c] text-slate-300' : 'bg-slate-200 border-[#d0d4dc] text-slate-600'}`}>
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[9px] font-bold ${isDark ? 'bg-slate-700 border-[#12121c] text-slate-300' : 'bg-slate-200 border-[#d0d4dc] text-slate-600'}`}>
                   +{members.length - 5}
                 </div>
               )}
             </div>
-            <Users size={12} />
+            <Users size={15} />
             <span>{members.length}</span>
 
             {/* Pending badge */}
             {isHost && pending.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-white text-[7px] font-bold flex items-center justify-center animate-pulse">
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center animate-pulse">
                 {pending.length}
               </span>
             )}
@@ -144,9 +124,9 @@ export const CollabBar: React.FC<Props> = ({
           {/* Leave button */}
           <button
             onClick={onLeave}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors text-[10px] font-bold"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors text-[12px] font-bold"
           >
-            <LogOut size={10} /> LEAVE
+            <LogOut size={13} /> LEAVE
           </button>
         </div>
       </div>
@@ -155,7 +135,7 @@ export const CollabBar: React.FC<Props> = ({
       {showPanel && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowPanel(false)} />
-          <div className={`absolute bottom-12 right-3 z-50 w-72 rounded-xl ${panelBg} border ${border} shadow-2xl overflow-hidden animate-fade-in-up`}>
+          <div className={`absolute bottom-14 right-4 z-50 w-72 rounded-xl ${panelBg} border ${border} shadow-2xl overflow-hidden animate-fade-in-up`}>
             <div className={`px-4 py-3 border-b ${border} flex items-center justify-between`}>
               <h3 className={`text-sm font-bold ${textP}`}>Room Members</h3>
               <button onClick={() => setShowPanel(false)} className={`p-1 rounded hover:${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>

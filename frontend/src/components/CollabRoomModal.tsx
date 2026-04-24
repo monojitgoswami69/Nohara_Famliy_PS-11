@@ -15,6 +15,8 @@ interface Props {
   onClose: () => void;
   onCreateRoom: (displayName: string, roomId: string) => void;
   onJoinRoom: (displayName: string, roomId: string) => void;
+  joinError?: string | null;
+  onClearJoinError?: () => void;
 }
 
 function generateRoomId(): string {
@@ -26,7 +28,7 @@ function generateRoomId(): string {
   return id;
 }
 
-export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom, onJoinRoom }) => {
+export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom, onJoinRoom, joinError, onClearJoinError }) => {
   const { isDark } = useTheme();
   const [tab, setTab] = useState<'create' | 'join'>('create');
   const [displayName, setDisplayName] = useState('');
@@ -58,8 +60,9 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
 
   const handleJoin = () => {
     if (!displayName.trim() || !roomId.trim()) return;
+    onClearJoinError?.();
     onJoinRoom(displayName.trim(), roomId.trim().toUpperCase());
-    onClose();
+    // Don't close — wait for approval or show error
   };
 
   return (
@@ -155,11 +158,14 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
                 <input
                   type="text"
                   value={roomId}
-                  onChange={e => setRoomId(e.target.value.toUpperCase())}
+                  onChange={e => { setRoomId(e.target.value.toUpperCase()); onClearJoinError?.(); }}
                   placeholder="e.g. A3K7M2"
                   maxLength={10}
-                  className={`w-full px-3 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${inputText} text-sm font-mono tracking-widest placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#CAA4F7]/50 focus:border-[#CAA4F7] transition-all`}
+                  className={`w-full px-3 py-2.5 rounded-lg border ${inputBg} ${joinError ? 'border-red-400 ring-2 ring-red-400/30' : inputBorder} ${inputText} text-sm font-mono tracking-widest placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#CAA4F7]/50 focus:border-[#CAA4F7] transition-all`}
                 />
+                {joinError && (
+                  <p className="text-xs mt-1.5 text-red-400 font-medium">{joinError}</p>
+                )}
               </div>
 
               <button
