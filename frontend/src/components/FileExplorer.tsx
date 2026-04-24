@@ -278,7 +278,7 @@ interface FileExplorerProps {
 export const FileExplorer: React.FC<FileExplorerProps> = ({
   files, activeFileId, loadingFileId, onFileSelect, onFileDelete, onRepoDelete,
   isInRoom, isHost, sharedFiles, collabFileContents,
-  onAddToCollab, onRemoveFromCollab, onSelectCollabFile,
+  onAddToCollab, onRemoveFromCollab, onSelectCollabFile, onReorderCollabFiles,
 }) => {
   const { isDark } = useTheme();
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
@@ -311,21 +311,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       setExpandedPaths(newExpanded);
     }
   }, [tree]);
-
-  const toggleExpand = (path: string) => {
-    setExpandedPaths(prev => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  };
-
-  const handleContextMenu = (e: React.MouseEvent, fileId: string, isInCollab: boolean) => {
-    if (!isInRoom || !isHost) return;
-    e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, fileId, isInCollab });
-  };
 
   const sortedChildren = Array.from(tree.children.values()).sort((a, b) => {
     if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;

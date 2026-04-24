@@ -326,6 +326,32 @@ function handleControlConnection(ws, roomId) {
         break;
       }
 
+      // ── Chat message ──────────────────────────────────────
+      case 'chat-message': {
+        if (!room || !room.members.has(peerId)) return;
+        const text = (msg.text || '').trim();
+        if (!text) return;
+
+        const member = room.members.get(peerId);
+        const chatMsg = {
+          type: 'chat-message',
+          id: `chat_${Date.now()}_${++peerCounter}`,
+          peerId,
+          displayName: member.displayName,
+          color: member.color,
+          text,
+          timestamp: Date.now(),
+        };
+        // Broadcast to ALL members (including sender for confirmation)
+        const data = JSON.stringify(chatMsg);
+        for (const [, m] of room.members) {
+          if (m.ws.readyState === WebSocket.OPEN) {
+            m.ws.send(data);
+          }
+        }
+        break;
+      }
+
       // ── Leave ───────────────────────────────────────────────
       case 'leave': {
         handleDisconnect(ws, peerId, room);

@@ -8,8 +8,9 @@ import { SharedFileInfo } from '../services/collabService';
 import { useTheme } from '../hooks/useTheme';
 import { detectLanguage, detectLanguageAI } from '../utils/detectLanguage';
 import {
-  FileCode, Plus, Upload, Code2, FolderOpen, Sun, Moon, Github, Users, X
+  FileCode, Plus, Upload, Code2, FolderOpen, Sun, Moon, Github, Users, X, MessageSquare, PanelRightClose
 } from 'lucide-react';
+import { ChatPanel } from './ChatPanel';
 import {
   JavaScript, TypeScript, Python, CPlusPlus, C, Java, Go, RustDark, Ruby, PHP
 } from 'developer-icons';
@@ -49,12 +50,15 @@ interface CollabHook {
   sharedFiles: SharedFileInfo[];
   provider: import('../services/collabService').CollabProvider | null;
   toasts: import('../hooks/useCollabRoom').CollabToast[];
+  chatMessages: import('../services/collabService').ChatMessage[];
+  peerId: string;
   leaveRoom: () => void;
   approveJoin: (peerId: string) => void;
   rejectJoin: (peerId: string) => void;
   shareFile: (file: { id: string; name: string; language: string; content: string }) => void;
   unshareFile: (fileId: string) => void;
   dismissToast: (id: string) => void;
+  sendChatMessage: (text: string) => void;
 }
 
 interface EditorViewProps {
@@ -99,6 +103,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
     return null;
   }, [activeFileId, files, collab.sharedFiles]);
 
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ ln: 1, col: 1 });
   const [selectionCount, setSelectionCount] = useState(0);
   const [fontSize] = useState(() => {
@@ -218,6 +223,19 @@ export const EditorView: React.FC<EditorViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {isInRoom && (
+            <button
+              onClick={() => setIsChatOpen(prev => !prev)}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all active:scale-95 ${
+                isChatOpen
+                  ? isDark ? 'bg-[#CAA4F7]/20 text-[#CAA4F7]' : 'bg-[#CAA4F7]/15 text-[#9B6DD7]'
+                  : isDark ? 'text-slate-400 hover:bg-slate-700/50 hover:text-[#CAA4F7]' : 'text-slate-500 hover:bg-slate-200 hover:text-[#9B6DD7]'
+              }`}
+              title={isChatOpen ? 'Close Chat' : 'Open Chat'}
+            >
+              {isChatOpen ? <PanelRightClose size={18} /> : <MessageSquare size={18} />}
+            </button>
+          )}
           {!isInRoom && (
             <button
               onClick={onOpenCollab}
@@ -268,7 +286,6 @@ export const EditorView: React.FC<EditorViewProps> = ({
                 onAddToCollab={handleAddToCollab}
                 onRemoveFromCollab={handleRemoveFromCollab}
                 onSelectCollabFile={handleSelectCollabFile}
-                onReorderCollabFiles={collab.reorderFiles}
               />
             )}
           </div>
@@ -330,6 +347,16 @@ export const EditorView: React.FC<EditorViewProps> = ({
             </div>
           )}
         </div>
+
+        {/* Chat side panel — flexes alongside editor */}
+        {isInRoom && (
+          <ChatPanel
+            isOpen={isChatOpen}
+            messages={collab.chatMessages}
+            selfPeerId={collab.peerId}
+            onSendMessage={collab.sendChatMessage}
+          />
+        )}
       </div>
 
       {/* Status bar */}

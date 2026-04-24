@@ -5,7 +5,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   CollabProvider, CollabMember, PendingRequest, CollabStatus,
-  SharedFileInfo, CollabEvents, getRandomColor,
+  SharedFileInfo, CollabEvents, getRandomColor, ChatMessage,
 } from '../services/collabService';
 
 export type CollabToast = {
@@ -26,6 +26,8 @@ export interface CollabState {
   sharedFiles: SharedFileInfo[];
   provider: CollabProvider | null;
   toasts: CollabToast[];
+  chatMessages: ChatMessage[];
+  peerId: string;
 }
 
 export function useCollabRoom() {
@@ -40,6 +42,8 @@ export function useCollabRoom() {
     sharedFiles: [],
     provider: null,
     toasts: [],
+    chatMessages: [],
+    peerId: '',
   });
 
   const [joinError, setJoinError] = useState<string | null>(null);
@@ -81,6 +85,7 @@ export function useCollabRoom() {
         ...prev,
         status,
         isHost: prov?.isHost ?? prev.isHost,
+        peerId: prov?.peerId ?? prev.peerId,
       }));
     },
     onMembersUpdate: (members: CollabMember[], pending: PendingRequest[]) => {
@@ -173,6 +178,12 @@ export function useCollabRoom() {
       setState(prev => ({ ...prev, sharedFiles }));
       addToast('You joined the room!', 'success');
     },
+    onChatMessage: (message: ChatMessage) => {
+      setState(prev => ({
+        ...prev,
+        chatMessages: [...prev.chatMessages, message],
+      }));
+    },
   };
 
   // ── Create room (user becomes host) ──────────────────────────────────
@@ -196,6 +207,8 @@ export function useCollabRoom() {
       members: [],
       pending: [],
       sharedFiles: [],
+      chatMessages: [],
+      peerId: '',
     }));
 
     provider.connect();
@@ -223,6 +236,8 @@ export function useCollabRoom() {
       members: [],
       pending: [],
       sharedFiles: [],
+      chatMessages: [],
+      peerId: '',
     }));
 
     provider.connect();
@@ -245,6 +260,8 @@ export function useCollabRoom() {
       pending: [],
       sharedFiles: [],
       provider: null,
+      chatMessages: [],
+      peerId: '',
     }));
   }, []);
 
@@ -270,6 +287,10 @@ export function useCollabRoom() {
     providerRef.current?.reorderFiles(files);
   }, []);
 
+  const sendChatMessage = useCallback((text: string) => {
+    providerRef.current?.sendChatMessage(text);
+  }, []);
+
   // ── Cleanup on unmount ───────────────────────────────────────────────
 
   useEffect(() => {
@@ -291,5 +312,6 @@ export function useCollabRoom() {
     unshareFile,
     reorderFiles,
     dismissToast,
+    sendChatMessage,
   };
 }

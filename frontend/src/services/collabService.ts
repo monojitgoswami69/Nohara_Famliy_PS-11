@@ -44,6 +44,15 @@ export interface SharedFileInfo {
   language: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  peerId: string;
+  displayName: string;
+  color: string;
+  text: string;
+  timestamp: number;
+}
+
 export type CollabStatus =
   | 'disconnected'
   | 'connecting'
@@ -64,6 +73,7 @@ export interface CollabEvents {
   onFileUnshared: (fileId: string) => void;
   onFilesReordered: (sharedFiles: SharedFileInfo[]) => void;
   onApproved: (sharedFiles: SharedFileInfo[]) => void;
+  onChatMessage: (message: ChatMessage) => void;
 }
 
 // ─── Predefined cursor colors ──────────────────────────────────────────
@@ -336,6 +346,11 @@ export class CollabProvider {
     }
   }
 
+  /** Send a chat message to the room */
+  sendChatMessage(text: string) {
+    this._sendJson({ type: 'chat-message', text });
+  }
+
   // ── Doc connection management ────────────────────────────────────────
 
   /** Open a Yjs sync connection for a specific shared file */
@@ -444,6 +459,17 @@ export class CollabProvider {
       
       case 'files-reordered':
         this.events.onFilesReordered(msg.sharedFiles || []);
+        break;
+
+      case 'chat-message':
+        this.events.onChatMessage({
+          id: msg.id,
+          peerId: msg.peerId,
+          displayName: msg.displayName,
+          color: msg.color,
+          text: msg.text,
+          timestamp: msg.timestamp,
+        });
         break;
 
       case 'error':
