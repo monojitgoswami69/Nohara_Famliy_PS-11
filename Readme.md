@@ -14,9 +14,6 @@
   <a href="https://codecollab.noharafamily.xyz">
     <img src="https://img.shields.io/badge/🌐 Live Demo-Click Here-green?style=for-the-badge"/>
   </a>
-  <img src="https://img.shields.io/github/languages/top/your-username/Nohara_Family_PS-11?style=for-the-badge"/>
-  <img src="https://img.shields.io/github/stars/your-username/Nohara_Family_PS-11?style=for-the-badge"/>
-  <img src="https://img.shields.io/github/license/your-username/Nohara_Family_PS-11?style=for-the-badge"/>
 </p>
 
 ---
@@ -24,32 +21,55 @@
 ## 🎬 Demo Preview
 
 <p align="center">
-  <img src="https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif" width="80%"/>
+  <img src="./assets/demo.gif" width="80%"/>
 </p>
-
-> ⚠️ Replace this GIF with your actual project demo for best impact.
 
 ---
 
 ## 🧠 About The Project
 
-**CodeCollab** is a full-stack platform for **real-time collaborative coding**.  
-It enables multiple users to write, edit, and sync code instantly.
-
-### 🎯 Use Cases
-- 👨‍🏫 Teaching & live coding sessions  
-- 👨‍💻 Pair programming  
-- 🧑‍🤝‍🧑 Team collaboration  
+**CodeCollab** is a real-time collaborative coding platform where multiple users can write and edit code together instantly.
 
 ---
 
 ## ✨ Features
 
 - ⚡ Real-time code sync using WebSockets  
-- 🎨 Modern UI with Tailwind CSS  
-- 🚀 Fast frontend powered by Vite + React  
-- 🔌 Live multi-user communication  
-- 🧠 Python-based backend API  
+- 🎨 Modern UI (Tailwind CSS)  
+- 🚀 Fast React + Vite frontend  
+- 🔌 Live collaboration rooms  
+- 🧠 Python backend APIs  
+
+---
+
+## 📸 Screenshots
+
+### 🖥️ Code Editor
+<p align="center">
+  <img src="./assets/editor.png" width="80%"/>
+</p>
+
+---
+
+### 👥 Live Collaboration (Host Room)
+<p align="center">
+  <img src="./assets/host-room.png" width="45%"/>
+</p>
+
+---
+
+### 🔗 Join Room
+<p align="center">
+  <img src="./assets/join-room.png" width="45%"/>
+</p>
+
+---
+
+### 📥 Import from GitHub
+<p align="center">
+  <img src="./assets/import-url.png" width="45%"/>
+  <img src="./assets/github-connect.png" width="45%"/>
+</p>
 
 ---
 
@@ -69,29 +89,17 @@ WebSocket Server (Node.js)
 
 ```
 Nohara_Family_PS-11/
-│
-├── frontend/            # React + Vite + Tailwind
-├── backend/             # Python API server
-├── backend-socket/      # WebSocket server
+├── frontend/
+├── backend/
+├── backend-socket/
 └── README.md
 ```
 
 ---
 
-## 🛠️ Tech Stack
-
-| Layer        | Technology |
-|-------------|------------|
-| Frontend     | React, Vite, TypeScript |
-| Styling      | Tailwind CSS |
-| Backend API  | Python |
-| Realtime     | Node.js, WebSockets |
-
----
-
 ## 🚀 Getting Started
 
-### 1️⃣ Clone Repository
+### Clone Repo
 
 ```bash
 git clone https://github.com/your-username/Nohara_Family_PS-11.git
@@ -100,18 +108,17 @@ cd Nohara_Family_PS-11
 
 ---
 
-### 2️⃣ Backend Setup
+### Backend
 
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env
 python main.py
 ```
 
 ---
 
-### 3️⃣ Frontend Setup
+### Frontend
 
 ```bash
 cd frontend
@@ -121,7 +128,7 @@ npm run dev
 
 ---
 
-### 4️⃣ Socket Server
+### Socket Server
 
 ```bash
 cd backend-socket
@@ -141,37 +148,18 @@ SOCKET_URL=http://localhost:3001
 
 ---
 
-## 📸 Screenshots
+## 🚧 Future Improvements
 
-<p align="center">
-  <img src="./assets/screenshot1.png" width="45%"/>
-  <img src="./assets/screenshot2.png" width="45%"/>
-</p>
-
----
-
-## 🚧 Roadmap
-
-- 🔐 Authentication system  
-- 📂 Save & load projects  
+- 🔐 Authentication  
+- 📂 Save projects  
 - 🧑‍🤝‍🧑 Multi-room support  
-- 🌐 Deployment improvements  
+- 🌐 Better deployment  
 
 ---
 
 ## 🤝 Contributing
 
-```bash
-# Fork the repo
-# Create a new branch
-git checkout -b feature-name
-
-# Commit changes
-git commit -m "Added feature"
-
-# Push
-git push origin feature-name
-```
+Pull requests are welcome!
 
 ---
 
@@ -184,12 +172,7 @@ MIT License
 ## 💙 Team Nohara Family
 
 <p align="center">
-  Made with ❤️ by Team Nohara Family
-</p>
-
----
-
-<p align="center">
+  Made with ❤️ by Team Nohara Family  
   ⭐ Star this repo if you like it!
 </p>
 
