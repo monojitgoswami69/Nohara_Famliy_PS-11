@@ -237,7 +237,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
           </div>
 
           <div className="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar">
-            {files.length === 0 ? (
+            {files.length === 0 && !(isInRoom && collab.sharedFiles.length > 0) ? (
               <div className={`flex flex-col items-center justify-center h-full py-8 ${textMuted}`}>
                 <FolderOpen size={28} className="mb-3 opacity-50" />
                 <p className="text-xs text-center">No snippets yet</p>
