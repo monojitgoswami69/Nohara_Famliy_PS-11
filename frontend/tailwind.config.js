@@ -36,6 +36,10 @@ export default {
           from: { opacity: '0', transform: 'translateX(-8px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
         },
+        slideInRight: {
+          from: { opacity: '0', transform: 'translateX(24px)' },
+          to: { opacity: '1', transform: 'translateX(0)' },
+        },
       },
     },
   },

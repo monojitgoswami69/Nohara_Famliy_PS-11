@@ -10,6 +10,7 @@ import {
   fetchFileContent, fetchFromPublicUrl, parseGitHubUrl, fetchRepoTree,
   GitHubUser, GitHubRepo, GitHubContent, RepoTreeItem
 } from '../services/githubService';
+import { useMountTransition } from '../hooks/useMountTransition';
 import { detectLanguageAI } from '../utils/detectLanguage';
 
 type Tab = 'url' | 'connect';
@@ -211,10 +212,11 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
     onClose();
   }, [onClose]);
 
-  if (!isOpen) return null;
+  const { hasRendered, isActive } = useMountTransition(isOpen, 300);
+
+  if (!hasRendered) return null;
 
   // Style tokens
-  const overlay = 'fixed inset-0 z-50 flex items-center justify-center';
   const bg = isDark ? 'bg-[#1a1a2e]' : 'bg-white';
   const border = isDark ? 'border-slate-700/50' : 'border-slate-200';
   const text = isDark ? 'text-slate-200' : 'text-slate-800';
@@ -223,9 +225,9 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
   const hoverBg = isDark ? 'hover:bg-[#2a2a45]' : 'hover:bg-slate-50';
 
   return (
-    <div className={overlay} onClick={resetAndClose}>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className={`relative ${bg} rounded-2xl shadow-2xl border ${border} w-[640px] max-h-[85vh] flex flex-col overflow-hidden animate-fade-in-up`}
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={resetAndClose}>
+      <div className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+      <div className={`relative ${bg} rounded-2xl shadow-2xl border ${border} w-[640px] max-h-[85vh] flex flex-col overflow-hidden transition-all duration-300 ease-out transform ${isActive ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0'}`}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
@@ -260,78 +262,77 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
         {/* Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
 
-          {/* ── URL Tab ────────────────────────────────── */}
-          {tab === 'url' && (
-            <div className="p-6 space-y-4">
-              <p className={`text-sm ${textMuted}`}>
-                Paste a public GitHub file link to import it directly into the editor.
-              </p>
-              <div className="space-y-3">
-                <input
-                  type="url"
-                  value={url}
-                  onChange={e => { setUrl(e.target.value); setUrlError(''); setUrlSuccess(''); }}
-                  onKeyDown={e => e.key === 'Enter' && handleUrlImport()}
-                  placeholder="https://github.com/owner/repo/blob/main/file.ts"
-                  className={`w-full px-4 py-3 rounded-xl border text-sm font-mono ${inputBg} focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all`}
-                  autoFocus
-                />
-                {urlError && (
+          {/* ── Grid Container for URL and Auth to sync height ── */}
+          {(tab === 'url' || (tab === 'connect' && browseView === 'auth')) && (
+            <div className="grid">
+              
+              {/* ── URL Tab ────────────────────────────────── */}
+              <div className={`col-start-1 row-start-1 p-6 space-y-4 transition-opacity duration-200 ${tab === 'url' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+                <p className={`text-sm ${textMuted}`}>
+                  Paste a public GitHub file link to import it directly into the editor.
+                </p>
+                <div className="space-y-3">
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={e => { setUrl(e.target.value); setUrlError(''); setUrlSuccess(''); }}
+                    onKeyDown={e => e.key === 'Enter' && handleUrlImport()}
+                    placeholder="https://github.com/owner/repo/blob/main/file.ts"
+                    className={`w-full px-4 py-3 rounded-xl border text-sm font-mono ${inputBg} focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all`}
+                    autoFocus={tab === 'url'}
+                  />
+                  {urlError && (
+                    <div className="flex items-start gap-2 text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">
+                      <AlertCircle size={14} className="mt-0.5 shrink-0" /><span>{urlError}</span>
+                    </div>
+                  )}
+                  {urlSuccess && (
+                    <div className="flex items-center gap-2 text-emerald-400 text-xs bg-emerald-500/10 rounded-lg px-3 py-2">
+                      <Check size={14} /><span>{urlSuccess}</span>
+                    </div>
+                  )}
+                  <button onClick={handleUrlImport} disabled={urlLoading || !url.trim()}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20">
+                    {urlLoading ? <Loader2 size={16} className="animate-spin" /> : <Github size={16} />}
+                    {urlLoading ? 'Importing...' : 'Import File'}
+                  </button>
+                </div>
+                <div className={`text-xs ${textMuted} space-y-1 pt-2`}>
+                  <p className="font-medium">Supported URL formats:</p>
+                  <code className={`block px-3 py-1.5 rounded-lg ${isDark ? 'bg-[#232340]' : 'bg-slate-100'} text-[11px]`}>
+                    github.com/owner/repo/blob/branch/path/file.ext
+                  </code>
+                  <code className={`block px-3 py-1.5 rounded-lg ${isDark ? 'bg-[#232340]' : 'bg-slate-100'} text-[11px]`}>
+                    raw.githubusercontent.com/owner/repo/branch/path/file.ext
+                  </code>
+                </div>
+              </div>
+
+              {/* ── Connect Tab (OAuth) ─────────────────── */}
+              <div className={`col-start-1 row-start-1 p-6 space-y-5 transition-opacity duration-200 ${tab === 'connect' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-600/20 flex items-center justify-center">
+                    <Github size={32} className={isDark ? 'text-white' : 'text-slate-800'} />
+                  </div>
+                  <h3 className={`text-base font-semibold mb-1 ${text}`}>Connect your GitHub account</h3>
+                  <p className={`text-sm ${textMuted}`}>
+                    Sign in with GitHub to browse and import files from all your repositories — including private ones.
+                  </p>
+                </div>
+                {authError && (
                   <div className="flex items-start gap-2 text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">
-                    <AlertCircle size={14} className="mt-0.5 shrink-0" /><span>{urlError}</span>
+                    <AlertCircle size={14} className="mt-0.5 shrink-0" /><span>{authError}</span>
                   </div>
                 )}
-                {urlSuccess && (
-                  <div className="flex items-center gap-2 text-emerald-400 text-xs bg-emerald-500/10 rounded-lg px-3 py-2">
-                    <Check size={14} /><span>{urlSuccess}</span>
-                  </div>
-                )}
-                <button onClick={handleUrlImport} disabled={urlLoading || !url.trim()}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20">
-                  {urlLoading ? <Loader2 size={16} className="animate-spin" /> : <Github size={16} />}
-                  {urlLoading ? 'Importing...' : 'Import File'}
+                <button onClick={handleConnect} disabled={authLoading}
+                  className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-[#24292f] to-[#1b1f23] hover:from-[#32383f] hover:to-[#24292f] text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-black/20 border border-white/10">
+                  {authLoading ? (
+                    <><Loader2 size={18} className="animate-spin" /> Authenticating…</>
+                  ) : (
+                    <><Github size={18} /> Sign in with GitHub</>
+                  )}
                 </button>
               </div>
-              <div className={`text-xs ${textMuted} space-y-1 pt-2`}>
-                <p className="font-medium">Supported URL formats:</p>
-                <code className={`block px-3 py-1.5 rounded-lg ${isDark ? 'bg-[#232340]' : 'bg-slate-100'} text-[11px]`}>
-                  github.com/owner/repo/blob/branch/path/file.ext
-                </code>
-                <code className={`block px-3 py-1.5 rounded-lg ${isDark ? 'bg-[#232340]' : 'bg-slate-100'} text-[11px]`}>
-                  raw.githubusercontent.com/owner/repo/branch/path/file.ext
-                </code>
-              </div>
-            </div>
-          )}
-
-          {/* ── Connect Tab (OAuth) ─────────────────── */}
-          {tab === 'connect' && browseView === 'auth' && (
-            <div className="p-6 space-y-5">
-              <div className="text-center py-4">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-600/20 flex items-center justify-center">
-                  <Github size={32} className={isDark ? 'text-white' : 'text-slate-800'} />
-                </div>
-                <h3 className={`text-base font-semibold mb-1 ${text}`}>Connect your GitHub account</h3>
-                <p className={`text-sm ${textMuted}`}>
-                  Sign in with GitHub to browse and import files from all your repositories — including private ones.
-                </p>
-              </div>
-              {authError && (
-                <div className="flex items-start gap-2 text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">
-                  <AlertCircle size={14} className="mt-0.5 shrink-0" /><span>{authError}</span>
-                </div>
-              )}
-              <button onClick={handleConnect} disabled={authLoading}
-                className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-[#24292f] to-[#1b1f23] hover:from-[#32383f] hover:to-[#24292f] text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-black/20 border border-white/10">
-                {authLoading ? (
-                  <><Loader2 size={18} className="animate-spin" /> Authenticating…</>
-                ) : (
-                  <><Github size={18} /> Sign in with GitHub</>
-                )}
-              </button>
-              <p className={`text-[11px] text-center ${textMuted}`}>
-                We'll open a secure GitHub popup. Your token stays in your browser.
-              </p>
             </div>
           )}
 

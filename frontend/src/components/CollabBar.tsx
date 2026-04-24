@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import { useTheme } from '../hooks/useTheme';
+import { useMountTransition } from '../hooks/useMountTransition';
 import {
   Users, Wifi, WifiOff, Loader2, Copy, Check, LogOut,
   UserCheck, UserX, Clock, Crown, X,
@@ -34,6 +35,7 @@ export const CollabBar: React.FC<Props> = ({
   const { isDark } = useTheme();
   const [copied, setCopied] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
+  const { hasRendered, isActive } = useMountTransition(showPanel, 300);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(roomId);
@@ -132,10 +134,10 @@ export const CollabBar: React.FC<Props> = ({
       </div>
 
       {/* ── Members/Pending panel ─────────────────────────────────────── */}
-      {showPanel && (
+      {hasRendered && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setShowPanel(false)} />
-          <div className={`absolute bottom-14 right-4 z-50 w-72 rounded-xl ${panelBg} border ${border} shadow-2xl overflow-hidden animate-fade-in-up`}>
+          <div className={`fixed inset-0 z-40 transition-opacity duration-300 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`} onClick={() => setShowPanel(false)} />
+          <div className={`absolute bottom-14 right-4 z-50 w-72 rounded-xl ${panelBg} border ${border} shadow-2xl overflow-hidden transition-all duration-300 ease-out transform origin-bottom-right ${isActive ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}>
             <div className={`px-4 py-3 border-b ${border} flex items-center justify-between`}>
               <h3 className={`text-sm font-bold ${textP}`}>Room Members</h3>
               <button onClick={() => setShowPanel(false)} className={`p-1 rounded hover:${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>

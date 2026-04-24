@@ -62,6 +62,7 @@ export interface CollabEvents {
   onRoomClosed: () => void;
   onFileShared: (file: SharedFileInfo) => void;
   onFileUnshared: (fileId: string) => void;
+  onFilesReordered: (sharedFiles: SharedFileInfo[]) => void;
   onApproved: (sharedFiles: SharedFileInfo[]) => void;
 }
 
@@ -319,6 +320,11 @@ export class CollabProvider {
     this._sendJson({ type: 'share-file', file });
   }
 
+  /** Reorder shared files (host only) */
+  reorderFiles(files: SharedFileInfo[]) {
+    this._sendJson({ type: 'reorder-files', files });
+  }
+
   /** Remove a file from collab (host only) */
   unshareFile(fileId: string) {
     this._sendJson({ type: 'unshare-file', fileId });
@@ -434,6 +440,10 @@ export class CollabProvider {
         // Close doc connection for this file
         this.closeFileConnection(msg.fileId);
         this.events.onFileUnshared(msg.fileId);
+        break;
+      
+      case 'files-reordered':
+        this.events.onFilesReordered(msg.sharedFiles || []);
         break;
 
       case 'error':

@@ -197,9 +197,24 @@ export const EditorView: React.FC<EditorViewProps> = ({
     <div className={`flex flex-col h-screen ${bg} text-slate-300 overflow-hidden`}>
       <header className={`h-14 flex items-center justify-between px-4 ${isDark ? 'bg-[#181821]' : 'bg-[#DBDFE7]'} z-20 shadow-sm border-b ${isDark ? 'border-slate-800/50' : 'border-slate-300/50'}`}>
         <div className="flex items-center gap-3">
-          <span className={`font-black tracking-tighter kode-font text-[28px] ${textPrimary} select-none`}>
-            CODECOLLAB
+          <img src="/CodeCollab-logo.png" alt="CodeCollab Logo" className="w-10 h-10 object-contain" />
+          <span className={`font-black tracking-tighter quantico-font text-[28px] ${textPrimary} select-none`}>
+            CodeCollab
           </span>
+          <button 
+            onClick={toggleTheme} 
+            className={`relative flex items-center justify-center w-8 h-8 ml-1 transition-colors ${isDark ? 'text-slate-400 hover:text-amber-300' : 'text-slate-500 hover:text-blue-500'}`}
+            aria-label="Toggle Theme"
+          >
+            <Sun 
+              size={20} 
+              className={`absolute transition-all duration-500 ease-in-out ${isDark ? 'scale-100 rotate-0 opacity-100' : 'scale-0 -rotate-90 opacity-0'}`} 
+            />
+            <Moon 
+              size={20} 
+              className={`absolute transition-all duration-500 ease-in-out ${isDark ? 'scale-0 rotate-90 opacity-0' : 'scale-100 rotate-0 opacity-100'}`} 
+            />
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -211,10 +226,6 @@ export const EditorView: React.FC<EditorViewProps> = ({
               <Users size={14} /> Collab
             </button>
           )}
-
-          <button onClick={toggleTheme} className={`flex items-center justify-center w-7 h-7 rounded-md transition-colors border ${isDark ? 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'}`}>
-            {isDark ? <Sun size={14} /> : <Moon size={14} />}
-          </button>
         </div>
       </header>
 
@@ -257,6 +268,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
                 onAddToCollab={handleAddToCollab}
                 onRemoveFromCollab={handleRemoveFromCollab}
                 onSelectCollabFile={handleSelectCollabFile}
+                onReorderCollabFiles={collab.reorderFiles}
               />
             )}
           </div>
@@ -370,16 +382,21 @@ export const EditorView: React.FC<EditorViewProps> = ({
           {collab.toasts.map(toast => (
             <div
               key={toast.id}
-              className={`pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium animate-fade-in-up ${
-                toast.type === 'error' ? 'bg-red-500/90 text-white' :
-                toast.type === 'success' ? 'bg-green-500/90 text-white' :
-                toast.type === 'warning' ? 'bg-amber-500/90 text-white' :
-                isDark ? 'bg-[#2a2a50] text-white border border-slate-600/50' : 'bg-white text-slate-900 border border-slate-200 shadow-md'
+              className={`pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 min-w-[280px] max-w-[400px] rounded-md shadow-lg text-[12px] font-medium transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+                toast.exiting ? 'opacity-0 translate-x-4 scale-100' : 'animate-[slideInRight_0.35s_cubic-bezier(0.2,0.8,0.2,1)_forwards] opacity-100 translate-x-0 scale-100'
+              } ${
+                toast.type === 'error' ? 'bg-[#bf616a] text-[#eceff4] border border-[#bf616a]/50' :
+                toast.type === 'success' ? 'bg-[#a3be8c] text-[#2e3440] border border-[#a3be8c]/50' :
+                toast.type === 'warning' ? 'bg-[#ebcb8b] text-[#2e3440] border border-[#ebcb8b]/50' :
+                isDark ? 'bg-[#3b4252] text-[#eceff4] border border-[#4c566a]' : 'bg-[#eceff4] text-[#2e3440] border border-[#d8dee9]'
               }`}
             >
-              <span>{toast.message}</span>
-              <button onClick={() => collab.dismissToast(toast.id)} className="ml-1 opacity-60 hover:opacity-100 transition-opacity">
-                <X size={12} />
+              <span className="flex-1 leading-snug">{toast.message}</span>
+              <button 
+                onClick={() => collab.dismissToast(toast.id)} 
+                className="shrink-0 ml-2 opacity-60 hover:opacity-100 transition-all p-1 rounded hover:bg-black/10 dark:hover:bg-white/10"
+              >
+                <X size={14} />
               </button>
             </div>
           ))}

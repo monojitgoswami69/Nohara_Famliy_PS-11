@@ -14,7 +14,7 @@ export const MobileWarning: React.FC = () => {
             <div className="bg-blue-600 p-1.5 rounded-md">
               <Layout size={14} className="text-white" />
             </div>
-            <h1 className={`text-lg font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <h1 className={`text-lg font-bold tracking-tight quantico-font ${isDark ? 'text-white' : 'text-slate-900'}`}>
               CodeCollab <span className="text-blue-500 text-[10px] font-mono font-normal ml-0.5 opacity-70">// v{VERSION}</span>
             </h1>
           </div>

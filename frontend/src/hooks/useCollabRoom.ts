@@ -8,11 +8,12 @@ import {
   SharedFileInfo, CollabEvents, getRandomColor,
 } from '../services/collabService';
 
-export interface CollabToast {
+export type CollabToast = {
   id: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
-}
+  exiting?: boolean;
+};
 
 export interface CollabState {
   status: CollabStatus;
@@ -47,26 +48,29 @@ export function useCollabRoom() {
 
   // ── Toast helpers ────────────────────────────────────────────────────
 
-  const addToast = useCallback((message: string, type: CollabToast['type'] = 'info') => {
-    const id = Date.now().toString();
+  const dismissToast = useCallback((id: string) => {
     setState(prev => ({
       ...prev,
-      toasts: [...prev.toasts.slice(-4), { id, message, type }],
+      toasts: prev.toasts.map(t => t.id === id ? { ...t, exiting: true } : t),
     }));
     setTimeout(() => {
       setState(prev => ({
         ...prev,
         toasts: prev.toasts.filter(t => t.id !== id),
       }));
-    }, 4000);
+    }, 300);
   }, []);
 
-  const dismissToast = useCallback((id: string) => {
+  const addToast = useCallback((message: string, type: CollabToast['type'] = 'info') => {
+    const id = Date.now().toString() + Math.random().toString(36).substring(2);
     setState(prev => ({
       ...prev,
-      toasts: prev.toasts.filter(t => t.id !== id),
+      toasts: [...prev.toasts.slice(-4), { id, message, type }],
     }));
-  }, []);
+    setTimeout(() => {
+      dismissToast(id);
+    }, 4000);
+  }, [dismissToast]);
 
   // ── Stable event handlers (use providerRef so they never go stale) ──
 
@@ -146,10 +150,13 @@ export function useCollabRoom() {
       }));
     },
     onFileShared: (file: SharedFileInfo) => {
-      setState(prev => ({
-        ...prev,
-        sharedFiles: [...prev.sharedFiles, file],
-      }));
+      setState(prev => {
+        if (prev.sharedFiles.some(f => f.id === file.id)) return prev;
+        return {
+          ...prev,
+          sharedFiles: [...prev.sharedFiles, file],
+        };
+      });
       addToast(`"${file.name}" added to collab`, 'info');
     },
     onFileUnshared: (fileId: string) => {
@@ -158,6 +165,9 @@ export function useCollabRoom() {
         sharedFiles: prev.sharedFiles.filter(f => f.id !== fileId),
       }));
       addToast('File removed from collab', 'warning');
+    },
+    onFilesReordered: (sharedFiles: SharedFileInfo[]) => {
+      setState(prev => ({ ...prev, sharedFiles }));
     },
     onApproved: (sharedFiles: SharedFileInfo[]) => {
       setState(prev => ({ ...prev, sharedFiles }));
@@ -256,6 +266,10 @@ export function useCollabRoom() {
     providerRef.current?.unshareFile(fileId);
   }, []);
 
+  const reorderFiles = useCallback((files: SharedFileInfo[]) => {
+    providerRef.current?.reorderFiles(files);
+  }, []);
+
   // ── Cleanup on unmount ───────────────────────────────────────────────
 
   useEffect(() => {
@@ -275,6 +289,7 @@ export function useCollabRoom() {
     rejectJoin,
     shareFile,
     unshareFile,
+    reorderFiles,
     dismissToast,
   };
 }

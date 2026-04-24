@@ -6,8 +6,9 @@
  *   • Join Room: enter room ID + display name → sends join request
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
+import { useMountTransition } from '../hooks/useMountTransition';
 import { X, Users, Plus, LogIn, Copy, Check } from 'lucide-react';
 
 interface Props {
@@ -31,12 +32,18 @@ function generateRoomId(): string {
 export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom, onJoinRoom, joinError, onClearJoinError }) => {
   const { isDark } = useTheme();
   const [tab, setTab] = useState<'create' | 'join'>('create');
-  const [displayName, setDisplayName] = useState('');
+  const [displayName, setDisplayName] = useState(() => localStorage.getItem('codecollab_displayName') || '');
   const [roomId, setRoomId] = useState('');
   const [generatedId] = useState(generateRoomId);
+
+  useEffect(() => {
+    localStorage.setItem('codecollab_displayName', displayName);
+  }, [displayName]);
   const [copied, setCopied] = useState(false);
 
-  if (!isOpen) return null;
+  const { hasRendered, isActive } = useMountTransition(isOpen, 300);
+
+  if (!hasRendered) return null;
 
   const bg = isDark ? 'bg-[#1a1a2e]' : 'bg-white';
   const border = isDark ? 'border-slate-700/50' : 'border-slate-200';
@@ -68,11 +75,11 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`} />
 
       {/* Modal */}
       <div
-        className={`relative w-full max-w-md mx-4 rounded-2xl ${bg} border ${border} shadow-2xl overflow-hidden animate-fade-in-up`}
+        className={`relative w-full max-w-md mx-4 rounded-2xl ${bg} border ${border} shadow-2xl overflow-hidden transition-all duration-300 ease-out transform ${isActive ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0'}`}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -122,8 +129,13 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
             />
           </div>
 
-          {tab === 'create' ? (
-            <>
+          <div className="grid grid-cols-1">
+            {/* Create Room Tab */}
+            <div
+              className={`col-start-1 row-start-1 flex flex-col space-y-4 transition-all duration-300 ${
+                tab === 'create' ? 'opacity-100 z-10' : 'opacity-0 -z-10 invisible'
+              }`}
+            >
               {/* Generated Room ID */}
               <div>
                 <label className={`block text-xs font-bold mb-1.5 ${textM}`}>ROOM ID</label>
@@ -139,19 +151,23 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
                     {copied ? <Check size={16} /> : <Copy size={16} />}
                   </button>
                 </div>
-                <p className={`text-xs mt-1.5 ${textM}`}>Share this ID with collaborators.</p>
               </div>
 
               <button
                 onClick={handleCreate}
                 disabled={!displayName.trim()}
-                className="w-full py-3 rounded-lg bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none shadow-md"
+                className="w-full py-3 rounded-lg bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none shadow-md mt-auto"
               >
                 Create & Host Room
               </button>
-            </>
-          ) : (
-            <>
+            </div>
+
+            {/* Join Room Tab */}
+            <div
+              className={`col-start-1 row-start-1 flex flex-col space-y-4 transition-all duration-300 ${
+                tab === 'join' ? 'opacity-100 z-10' : 'opacity-0 -z-10 invisible'
+              }`}
+            >
               {/* Room ID input */}
               <div>
                 <label className={`block text-xs font-bold mb-1.5 ${textM}`}>ROOM ID</label>
@@ -161,7 +177,9 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
                   onChange={e => { setRoomId(e.target.value.toUpperCase()); onClearJoinError?.(); }}
                   placeholder="e.g. A3K7M2"
                   maxLength={10}
-                  className={`w-full px-3 py-2.5 rounded-lg border ${inputBg} ${joinError ? 'border-red-400 ring-2 ring-red-400/30' : inputBorder} ${inputText} text-sm font-mono tracking-widest placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#CAA4F7]/50 focus:border-[#CAA4F7] transition-all`}
+                  className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${
+                    joinError ? 'border-red-400 ring-2 ring-red-400/30' : inputBorder
+                  } font-mono text-lg tracking-[0.3em] font-bold ${textP} placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#CAA4F7]/50 focus:border-[#CAA4F7] transition-all uppercase`}
                 />
                 {joinError && (
                   <p className="text-xs mt-1.5 text-red-400 font-medium">{joinError}</p>
@@ -171,17 +189,12 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
               <button
                 onClick={handleJoin}
                 disabled={!displayName.trim() || !roomId.trim()}
-                className="w-full py-3 rounded-lg bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none shadow-md"
+                className="w-full py-3 rounded-lg bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none shadow-md mt-auto"
               >
                 Request to Join
               </button>
-            </>
-          )}
-        </div>
-
-        {/* Footer hint */}
-        <div className={`px-6 pb-4 text-center text-xs ${textM}`}>
-          All changes sync in real-time using CRDT technology.
+            </div>
+          </div>
         </div>
       </div>
     </div>

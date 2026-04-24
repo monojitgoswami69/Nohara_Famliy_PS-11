@@ -276,6 +276,30 @@ function handleControlConnection(ws, roomId) {
         break;
       }
 
+      // ── Reorder shared files (host only) ──────────────────────
+      case 'reorder-files': {
+        if (!room || peerId !== room.hostId) return;
+        const newFilesList = msg.files;
+        if (!Array.isArray(newFilesList)) return;
+
+        const oldMap = room.sharedFiles;
+        const newMap = new Map();
+        for (const f of newFilesList) {
+          const existing = oldMap.get(f.id);
+          if (existing) {
+            newMap.set(f.id, existing);
+          }
+        }
+        room.sharedFiles = newMap;
+
+        // Notify all members of the new order
+        room.broadcastJson({
+          type: 'files-reordered',
+          sharedFiles: room.getSharedFilesList(),
+        });
+        break;
+      }
+
       // ── Unshare a file (host only) ──────────────────────────
       case 'unshare-file': {
         if (!room || peerId !== room.hostId) return;
