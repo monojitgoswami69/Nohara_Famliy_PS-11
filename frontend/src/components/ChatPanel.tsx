@@ -13,6 +13,7 @@ interface ChatPanelProps {
   messages: ChatMessage[];
   selfPeerId: string;
   onSendMessage: (text: string) => void;
+  onClose?: () => void;
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -20,6 +21,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   messages,
   selfPeerId,
   onSendMessage,
+  onClose,
 }) => {
   const { isDark } = useTheme();
   const [inputValue, setInputValue] = useState('');
@@ -54,9 +56,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
   return (
     <div 
-      className="shrink-0 overflow-hidden"
+      className={`shrink-0 overflow-hidden fixed md:relative right-0 top-0 bottom-0 z-40 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none md:pointer-events-auto'}`}
       style={{
-        width: isOpen ? 300 : 0,
+        width: isOpen ? 'clamp(280px, 100vw, 300px)' : 0,
         transition: 'width 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         willChange: 'width',
         contain: 'strict',
@@ -64,7 +66,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     >
       {/* Inner: GPU-composited slide via transform (runs on compositor thread) */}
       <div 
-        className={`flex flex-col h-full w-[300px] border-l ${borderColor} ${panelBg}`}
+        className={`flex flex-col h-full w-[280px] sm:w-[300px] border-l ${borderColor} ${panelBg} shadow-2xl md:shadow-none`}
         style={{
           transform: isOpen ? 'translate3d(0, 0, 0)' : 'translate3d(100%, 0, 0)',
           opacity: isOpen ? 1 : 0,
@@ -74,9 +76,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         }}
       >
         {/* Header */}
-        <div className={`flex items-center gap-2 px-4 py-3 border-b ${borderColor} shrink-0`}>
-          <MessageSquare size={15} className="text-[#CAA4F7]" />
-          <h2 className={`text-xs font-bold uppercase tracking-wider ${textMuted}`}>Room Chat</h2>
+        <div className={`flex items-center justify-between px-4 py-3 border-b ${borderColor} shrink-0`}>
+          <div className="flex items-center gap-2">
+            <MessageSquare size={15} className="text-[#CAA4F7]" />
+            <h2 className={`text-xs font-bold uppercase tracking-wider ${textMuted}`}>Room Chat</h2>
+          </div>
+          {onClose && (
+            <button 
+              onClick={onClose}
+              className={`md:hidden p-1.5 rounded-md ${textMuted} hover:text-red-500 hover:bg-red-500/10 transition-colors`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          )}
         </div>
 
         {/* Messages Area */}

@@ -8,7 +8,7 @@ import { SharedFileInfo } from '../services/collabService';
 import { useTheme } from '../hooks/useTheme';
 import { detectLanguage, detectLanguageAI } from '../utils/detectLanguage';
 import {
-  FileCode, Plus, Upload, Code2, FolderOpen, Sun, Moon, Github, Users, X, MessageSquare, PanelRightClose
+  FileCode, Plus, Upload, Code2, FolderOpen, Sun, Moon, Github, Users, X, MessageSquare, PanelRightClose, Menu
 } from 'lucide-react';
 import { ChatPanel } from './ChatPanel';
 import {
@@ -104,6 +104,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
   }, [activeFileId, files, collab.sharedFiles]);
 
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ ln: 1, col: 1 });
   const [selectionCount, setSelectionCount] = useState(0);
   const [fontSize] = useState(() => {
@@ -201,9 +202,16 @@ export const EditorView: React.FC<EditorViewProps> = ({
   return (
     <div className={`flex flex-col h-screen ${bg} text-slate-300 overflow-hidden`}>
       <header className={`h-14 flex items-center justify-between px-4 ${isDark ? 'bg-[#181821]' : 'bg-[#DBDFE7]'} z-20 shadow-sm border-b ${isDark ? 'border-slate-800/50' : 'border-slate-300/50'}`}>
-        <div className="flex items-center gap-3">
-          <img src="/CodeCollab-logo.png" alt="CodeCollab Logo" className="w-10 h-10 object-contain" />
-          <span className={`font-black tracking-tighter quantico-font text-[28px] ${textPrimary} select-none`}>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className={`md:hidden p-1.5 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-200'}`}
+            aria-label="Open Sidebar"
+          >
+            <Menu size={20} />
+          </button>
+          <img src="/CodeCollab-logo.png" alt="CodeCollab Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+          <span className={`hidden sm:inline font-black tracking-tighter quantico-font text-[24px] sm:text-[28px] ${textPrimary} select-none`}>
             CodeCollab
           </span>
           <button 
@@ -247,8 +255,26 @@ export const EditorView: React.FC<EditorViewProps> = ({
         </div>
       </header>
 
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        <div className={`w-64 flex flex-col ${bg}`}>
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 z-40 bg-black/50 md:hidden backdrop-blur-sm transition-opacity" 
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <div className={`
+          fixed md:relative inset-y-0 left-0 z-50 w-[280px] md:w-64 transform transition-transform duration-300 ease-in-out md:transform-none flex flex-col ${bg} border-r ${isDark ? 'border-slate-800/50' : 'border-slate-300/50'} md:border-r-0
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}>
+          <div className={`flex md:hidden items-center justify-between px-4 py-3 border-b ${isDark ? 'border-slate-800/50' : 'border-slate-300/50'}`}>
+            <span className={`font-bold ${textPrimary}`}>Files</span>
+            <button onClick={() => setIsSidebarOpen(false)} className={`p-1.5 rounded-md ${textMuted} hover:bg-red-500/10 hover:text-red-500 transition-colors`}>
+              <X size={20} />
+            </button>
+          </div>
           <div className="px-2 pt-4 pb-2 space-y-2">
             <div className="flex gap-2">
               <button onClick={onFileCreate} className="flex-1 flex items-center justify-center gap-2 bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95">
@@ -355,15 +381,16 @@ export const EditorView: React.FC<EditorViewProps> = ({
             messages={collab.chatMessages}
             selfPeerId={collab.peerId}
             onSendMessage={collab.sendChatMessage}
+            onClose={() => setIsChatOpen(false)}
           />
         )}
       </div>
 
       {/* Status bar */}
-      <div className={`h-8 flex items-center justify-between px-2 text-[12px] kode-font font-black ${isDark ? 'bg-[#181821] text-white/70' : 'bg-[#DBDFE7] text-slate-500/30'} relative`}>
-        <div className="flex items-center gap-3">
+      <div className={`h-8 flex items-center justify-between px-2 sm:px-4 text-[10px] sm:text-[12px] kode-font font-black ${isDark ? 'bg-[#181821] text-white/70' : 'bg-[#DBDFE7] text-slate-500/30'} relative`}>
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 h-4">
-            <FileCode size={14} />
+            <FileCode size={14} className="hidden sm:block" />
             <span>{files.length} FILES</span>
           </div>
           {activeFile && (
@@ -379,8 +406,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
           {activeFile && (
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5 h-4">
-                <Code2 size={14} />
-                <span>LN {cursorPosition.ln}, COL {cursorPosition.col} {selectionCount > 0 && `(${selectionCount} selected)`}</span>
+                <Code2 size={14} className="hidden sm:block" />
+                <span>LN {cursorPosition.ln}, COL {cursorPosition.col} <span className="hidden sm:inline">{selectionCount > 0 && `(${selectionCount} selected)`}</span></span>
               </div>
             </div>
           )}
