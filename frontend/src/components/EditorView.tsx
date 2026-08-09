@@ -272,7 +272,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
   const textPrimary = isDark ? 'text-white' : 'text-slate-900';
 
   return (
-    <div className={`flex flex-col h-screen ${bg} text-slate-300 overflow-hidden`}>
+    <div className={`flex flex-col h-screen ${bg} ${isDark ? 'text-slate-200' : 'text-slate-800'} overflow-hidden`}>
       <header className={`h-14 flex items-center justify-between px-4 ${isDark ? 'bg-[#181C2A]' : 'bg-[#FFF9EA]'} z-20 border-b-2.5 border-black shadow-neo-sm`}>
 
         <div className="flex items-center gap-2 sm:gap-3">
@@ -289,9 +289,9 @@ export const EditorView: React.FC<EditorViewProps> = ({
           </span>
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 border-2 border-black bg-white dark:bg-slate-800 text-black dark:text-white shadow-neo-sm font-black text-xs transition-all hover:bg-neo-yellow hover:text-black active:translate-x-0.5 active:translate-y-0.5 ml-2"
+            className={`hidden md:flex items-center gap-2 px-3 py-1.5 border-2 border-black shadow-neo-sm font-black text-xs transition-all hover:bg-neo-yellow hover:text-black active:translate-x-0.5 active:translate-y-0.5 ml-2 ${isDark ? 'bg-slate-800 text-white' : 'bg-white text-black'}`}
           >
-            <Search size={14} className="text-black dark:text-white" />
+            <Search size={14} />
             <span className="font-bold">Search / Commands</span>
             <span className="neo-badge bg-neo-yellow text-black text-[9px] px-1.5 py-0.2">Ctrl+K</span>
           </button>
@@ -377,7 +377,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
           <div className="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar">
             {files.length === 0 && !(isInRoom && collab.sharedFiles.length > 0) ? (
-              <div className={`flex flex-col items-center justify-center h-full py-8 text-black/60 dark:text-white/60 font-bold`}>
+              <div className={`flex flex-col items-center justify-center h-full py-8 font-bold ${isDark ? 'text-white/60' : 'text-black/60'}`}>
                 <FolderOpen size={32} className="mb-2 opacity-70" />
                 <p className="text-xs text-center uppercase tracking-wide">No Snippets Yet</p>
               </div>
@@ -429,7 +429,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
                     <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-black dark:text-white drop-shadow-[3px_3px_0px_#000]">
                       REAL-TIME COLLABORATIVE CODE EDITOR
                     </h1>
-                    <p className="text-sm md:text-base font-bold text-slate-700 dark:text-slate-300 max-w-2xl leading-relaxed">
+                    <p className={`text-sm md:text-base font-bold max-w-2xl leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                       Zero-install browser IDE powered by Yjs CRDTs, Monaco Editor, FastAPI REST server, and dual-channel WebSockets.
                     </p>
                   </div>

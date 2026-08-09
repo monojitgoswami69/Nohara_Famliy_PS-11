@@ -19,6 +19,12 @@ interface Props {
   file: StoredFile;
   theme: 'dark' | 'light';
   fontSize: number;
+  fontFamily?: string;
+  tabSize?: number;
+  wordWrap?: 'on' | 'off';
+  showMinimap?: boolean;
+  lineNumbers?: 'on' | 'off' | 'relative';
+  editorRef?: React.MutableRefObject<Monaco.editor.IStandaloneCodeEditor | null>;
   provider: CollabProvider;
   onChange: (value: string) => void;
   onCursorChange: (ln: number, col: number) => void;
@@ -340,11 +346,12 @@ export const CollabMonacoEditor: React.FC<Props> = ({
         options={{
           automaticLayout: true,
           fontSize,
-          fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-          minimap: { enabled: true, showSlider: 'mouseover', renderCharacters: true },
-          wordWrap: 'on',
+          fontFamily: fontFamily ?? "'JetBrains Mono', 'Fira Code', monospace",
+          tabSize: tabSize ?? 2,
+          minimap: { enabled: showMinimap ?? true, showSlider: 'mouseover', renderCharacters: true },
+          wordWrap: wordWrap ?? 'on',
           scrollBeyondLastLine: false,
-          lineNumbers: 'on',
+          lineNumbers: lineNumbers ?? 'on',
           roundedSelection: false,
           padding: { top: 16, bottom: 16 },
           bracketPairColorization: { enabled: true },

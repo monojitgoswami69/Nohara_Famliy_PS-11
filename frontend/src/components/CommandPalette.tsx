@@ -158,7 +158,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {/* Quick Action Commands Section */}
           {filteredActions.length > 0 && (
             <>
-              <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
+              <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Actions & Commands
               </div>
               {filteredActions.map(action => (
@@ -172,7 +172,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   </div>
                   <div className="flex-1">
                     <div className="font-black uppercase text-black dark:text-white group-hover:text-black">{action.title}</div>
-                    <div className="text-[10px] opacity-80 text-slate-600 dark:text-slate-300 group-hover:text-black">{action.subtitle}</div>
+                    <div className="text-[10px] opacity-90 text-slate-700 dark:text-slate-200 group-hover:text-black">{action.subtitle}</div>
                   </div>
                   <span className="neo-badge bg-black text-white group-hover:bg-white group-hover:text-black px-1.5 py-0.5 text-[8px] font-black">
                     {action.badge}
@@ -185,14 +185,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {/* Snippets / Files Results Section */}
           {filteredFiles.length > 0 && (
             <>
-              <div className="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
+              <div className="px-3 pt-3 pb-1 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Workspace Snippets ({filteredFiles.length})
               </div>
               {filteredFiles.map(file => (
                 <button
                   key={file.id}
                   onClick={() => { onSelectFile(file.id); onClose(); }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-black hover:bg-neo-yellow hover:text-black font-bold text-xs transition-all text-left ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 border-2 border-transparent hover:border-black hover:bg-neo-yellow hover:text-black font-bold text-xs transition-all text-left text-black dark:text-white ${
                     file.id === activeFileId ? 'bg-neo-yellow/30 font-black' : ''
                   }`}
                 >
@@ -201,7 +201,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   {file.id === activeFileId && (
                     <span className="neo-badge bg-neo-green text-black px-1 py-0.2 text-[8px]">ACTIVE</span>
                   )}
-                  <span className="neo-badge bg-slate-100 text-black px-1.5 py-0.5 text-[8px] uppercase">
+                  <span className="neo-badge bg-slate-200 dark:bg-slate-600 text-black dark:text-white px-1.5 py-0.5 text-[8px] uppercase">
                     {file.language || 'text'}
                   </span>
                 </button>
@@ -210,7 +210,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           )}
 
           {filteredActions.length === 0 && filteredFiles.length === 0 && (
-            <div className="p-6 text-center text-xs text-slate-500 font-bold">
+            <div className="p-6 text-center text-xs text-slate-600 dark:text-slate-300 font-bold">
               No matching commands or snippets found for "{query}"
             </div>
           )}
@@ -218,8 +218,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer Shortcut Guide */}
-        <div className="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-t-2 border-black flex items-center justify-between text-[10px] font-bold text-slate-600 dark:text-slate-300">
-          <span>PRESS <kbd className="px-1 py-0.5 bg-white text-black border border-black font-black">ESC</kbd> TO CLOSE</span>
+        <div className="px-4 py-2 bg-slate-100 dark:bg-[#232340] border-t-2 border-black flex items-center justify-between text-[10px] font-bold text-slate-700 dark:text-slate-200">
+          <span>PRESS <kbd className="px-1 py-0.5 bg-white dark:bg-slate-700 text-black dark:text-white border border-black font-black">ESC</kbd> TO CLOSE</span>
           <span>CODECOLLAB COMMAND PALETTE</span>
         </div>
 

@@ -87,10 +87,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full py-8 text-black/60 dark:text-white/60 font-bold">
+            <div className={`flex flex-col items-center justify-center h-full py-8 font-bold ${isDark ? 'text-white/60' : 'text-black/60'}`}>
               <MessageSquare size={28} className="mb-2 opacity-60" />
               <p className="text-xs font-black uppercase tracking-wide">No Messages Yet</p>
-              <p className="text-[10px] mt-1 font-semibold">Say hello to your collaborators!</p>
+              <p className={`text-[10px] mt-1 font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Say hello to your collaborators!</p>
             </div>
           )}
           {messages.map((msg) => {
@@ -106,7 +106,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       {msg.displayName.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className={`text-[10px] font-black uppercase ${isSelf ? 'text-neo-yellow dark:text-neo-purple' : textMuted}`}>
+                  <span className={`text-[10px] font-black uppercase ${isSelf ? (isDark ? 'text-neo-purple' : 'text-neo-yellow') : textMuted}`}>
                     {isSelf ? 'You' : msg.displayName}
                   </span>
                   <span className={`text-[9px] font-bold ${textMuted} opacity-70`}>
@@ -130,7 +130,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         </div>
 
         {/* Input Area */}
-        <div className="p-3 border-t-2.5 border-black shrink-0 bg-white dark:bg-[#12131C]">
+        <div className={`p-3 border-t-2.5 border-black shrink-0 ${isDark ? 'bg-[#12131C]' : 'bg-white'}`}>
           <form onSubmit={handleSend} className="relative">
             <input
               type="text"

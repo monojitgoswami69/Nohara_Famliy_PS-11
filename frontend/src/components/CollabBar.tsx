@@ -71,7 +71,7 @@ export const CollabBar: React.FC<Props> = ({
   return (
     <>
       {/* ── Collab status bar ─────────────────────────────────────────── */}
-      <div className={`h-12 flex items-center justify-between px-4 text-[13px] kode-font font-black ${bg} text-black dark:text-white border-t-2.5 border-black shadow-neo-sm relative`}>
+      <div className={`h-12 flex items-center justify-between px-4 text-[13px] kode-font font-black ${bg} ${isDark ? 'text-white' : 'text-black'} border-t-2.5 border-black shadow-neo-sm relative`}>
         <div className="flex items-center gap-3">
           {/* Status */}
           <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export const CollabBar: React.FC<Props> = ({
             <div className="max-h-60 overflow-y-auto custom-scrollbar">
               {/* Approved members */}
               {members.map(m => (
-                <div key={m.peerId} className={`flex items-center gap-3 px-4 py-2.5 border-b border-black/10 ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}>
+                <div key={m.peerId} className={`flex items-center gap-3 px-4 py-2.5 border-b border-black/10 ${isDark ? 'hover:bg-slate-700 text-white' : 'hover:bg-slate-100 text-slate-900'}`}>
                   <div
                     className="w-7 h-7 border-2 border-black flex items-center justify-center text-xs font-black text-black shrink-0 shadow-neo-sm"
                     style={{ backgroundColor: m.color }}
@@ -178,7 +178,7 @@ export const CollabBar: React.FC<Props> = ({
                       >
                         {p.displayName[0]?.toUpperCase()}
                       </div>
-                      <span className={`flex-1 text-xs font-bold truncate ${textP}`}>{p.displayName}</span>
+                      <span className={`flex-1 text-xs font-bold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.displayName}</span>
                       <div className="flex gap-1.5 shrink-0">
                         <button
                           onClick={() => onApprove(p.peerId)}

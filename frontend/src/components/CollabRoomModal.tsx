@@ -91,7 +91,7 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b-2.5 border-black bg-slate-100 dark:bg-slate-900">
+        <div className={`flex border-b-2.5 border-black ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
           {(['create', 'join'] as const).map(t => (
             <button
               key={t}
@@ -99,7 +99,7 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
               className={`flex-1 py-3 text-sm font-black uppercase tracking-wide transition-all ${
                 tab === t
                   ? 'bg-neo-purple text-black border-r-2 border-l-2 border-black shadow-neo-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
+                  : isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200'
               }`}
             >
               {t === 'create' ? (
@@ -115,7 +115,7 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
         <div className="px-6 py-5 space-y-4">
           {/* Display Name */}
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-slate-800 dark:text-slate-200">DISPLAY NAME</label>
+          <label className={`block text-xs font-black uppercase tracking-wider mb-1.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>DISPLAY NAME</label>
             <input
               type="text"
               value={displayName}
@@ -135,7 +135,7 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
             >
               {/* Generated Room ID */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-slate-800 dark:text-slate-200">ROOM CODE</label>
+                <label className={`block text-xs font-black uppercase tracking-wider mb-1.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>ROOM CODE</label>
                 <div className="flex gap-2">
                   <div className={`flex-1 flex items-center px-4 py-2.5 ${inputBg} ${inputBorder} font-mono text-xl tracking-[0.3em] font-black text-black dark:text-white select-all bg-neo-yellow/30`}>
                     {generatedId}
@@ -167,7 +167,7 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
             >
               {/* Room ID input */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-slate-800 dark:text-slate-200">ENTER ROOM CODE</label>
+                <label className={`block text-xs font-black uppercase tracking-wider mb-1.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>ENTER ROOM CODE</label>
                 <input
                   type="text"
                   value={roomId}

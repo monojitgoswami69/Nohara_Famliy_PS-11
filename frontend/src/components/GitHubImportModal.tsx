@@ -247,12 +247,12 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b-2.5 border-black bg-slate-100 dark:bg-slate-900 px-6">
+        <div className={`flex border-b-2.5 border-black px-6 ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
           {([['url', Link2, 'Paste URL'] as const, ['connect', Github, 'Connect GitHub'] as const]).map(([key, Icon, label]) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-black uppercase tracking-wide border-b-3 transition-colors ${tab === key
                 ? 'border-black bg-neo-purple text-black shadow-neo-sm'
-                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'}`}>
+                : isDark ? 'border-transparent text-slate-300 hover:text-white' : 'border-transparent text-slate-600 hover:text-black'}`}>
               <Icon size={16} />
               {label}
             </button>

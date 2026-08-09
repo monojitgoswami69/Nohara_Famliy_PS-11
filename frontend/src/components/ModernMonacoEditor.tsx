@@ -8,6 +8,12 @@ interface ModernMonacoEditorProps {
     file: StoredFile;
     theme: 'dark' | 'light';
     fontSize: number;
+    fontFamily?: string;
+    tabSize?: number;
+    wordWrap?: 'on' | 'off';
+    showMinimap?: boolean;
+    lineNumbers?: 'on' | 'off' | 'relative';
+    editorRef?: React.MutableRefObject<Monaco.editor.IStandaloneCodeEditor | null>;
     onChange: (value: string) => void;
     onCursorChange: (ln: number, col: number) => void;
     onSelectionChange: (count: number) => void;
@@ -94,6 +100,12 @@ export const ModernMonacoEditor: React.FC<ModernMonacoEditorProps> = ({
     file,
     theme,
     fontSize,
+    fontFamily = "'JetBrains Mono', 'Fira Code', monospace",
+    tabSize = 2,
+    wordWrap = 'on',
+    showMinimap = true,
+    lineNumbers = 'on',
+    editorRef: externalEditorRef,
     onChange,
     onCursorChange,
     onSelectionChange,
@@ -101,8 +113,14 @@ export const ModernMonacoEditor: React.FC<ModernMonacoEditorProps> = ({
     const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
     const monacoRef = useRef<typeof Monaco | null>(null);
 
-    const handleEditorDidMount: OnMount = (editor, monaco) => {
+    // Sync external ref
+    const handleRef = (editor: Monaco.editor.IStandaloneCodeEditor | null) => {
         editorRef.current = editor;
+        if (externalEditorRef) externalEditorRef.current = editor;
+    };
+
+    const handleEditorDidMount: OnMount = (editor, monaco) => {
+        handleRef(editor);
         monacoRef.current = monaco;
 
         // Define custom themes
@@ -190,15 +208,16 @@ export const ModernMonacoEditor: React.FC<ModernMonacoEditorProps> = ({
                 options={{
                     automaticLayout: true,
                     fontSize,
-                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    fontFamily,
+                    tabSize,
                     minimap: {
-                        enabled: true,
+                        enabled: showMinimap,
                         showSlider: 'mouseover',
                         renderCharacters: true,
                     },
-                    wordWrap: 'on',
+                    wordWrap,
                     scrollBeyondLastLine: false,
-                    lineNumbers: 'on',
+                    lineNumbers,
                     roundedSelection: false,
                     padding: { top: 16, bottom: 16 },
                     bracketPairColorization: { enabled: true },
