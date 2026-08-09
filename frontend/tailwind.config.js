@@ -17,6 +17,34 @@ export default {
           850: '#1a202c',
           950: '#0b1120',
         },
+        neo: {
+          yellow: '#FFDC58',
+          purple: '#D6C5FF',
+          green: '#A3E635',
+          pink: '#FF85A2',
+          blue: '#80E5FF',
+          orange: '#FF9F43',
+          red: '#FF6B6B',
+          bg: {
+            light: '#FAF7F0',
+            dark: '#12131C',
+            card: '#1B1C28',
+            cardLight: '#FFFFFF',
+          },
+        },
+      },
+      boxShadow: {
+        'neo': '4px 4px 0px 0px #000000',
+        'neo-sm': '2px 2px 0px 0px #000000',
+        'neo-lg': '6px 6px 0px 0px #000000',
+        'neo-xl': '8px 8px 0px 0px #000000',
+        'neo-white': '4px 4px 0px 0px #FFFFFF',
+        'neo-white-sm': '2px 2px 0px 0px #FFFFFF',
+        'neo-purple': '4px 4px 0px 0px #D6C5FF',
+        'neo-yellow': '4px 4px 0px 0px #FFDC58',
+      },
+      borderWidth: {
+        '3': '3px',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out forwards',
@@ -45,3 +73,4 @@ export default {
   },
   plugins: [],
 };
+

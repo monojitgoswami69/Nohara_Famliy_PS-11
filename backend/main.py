@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
-from routers import auth, github  # noqa: E402
+from routers import auth, github, execute  # noqa: E402
 
 app = FastAPI(title="CodeCollab API", version="1.0.0")
 
@@ -27,6 +27,8 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(github.router, prefix="/api/github", tags=["GitHub"])
+app.include_router(execute.router, prefix="/api/execute", tags=["Execution"])
+
 
 
 @app.get("/")

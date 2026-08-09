@@ -43,16 +43,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Theme tokens — match the app's palette
-  const panelBg = isDark ? 'bg-[#1E1E2A]' : 'bg-[#F0F2F6]';
-  const borderColor = isDark ? 'border-slate-700/50' : 'border-slate-300/50';
-  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
-  const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
-  const inputBg = isDark ? 'bg-[#232340] border-slate-600/50' : 'bg-white border-slate-300';
-  const selfBubble = 'bg-[#CAA4F7] text-[#1E1E2A]';
-  const otherBubble = isDark
-    ? 'bg-[#232340] text-slate-200'
-    : 'bg-white text-slate-800 border border-slate-200/80';
+  // Theme tokens — match Neo-Brutalism palette
+  const panelBg = isDark ? 'bg-[#181C2A]' : 'bg-[#FAF7F0]';
+  const textMuted = isDark ? 'text-slate-400' : 'text-slate-600';
+
 
   return (
     <div 
@@ -64,9 +58,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         contain: 'strict',
       }}
     >
-      {/* Inner: GPU-composited slide via transform (runs on compositor thread) */}
+      {/* Inner: GPU-composited slide via transform */}
       <div 
-        className={`flex flex-col h-full w-[280px] sm:w-[300px] border-l ${borderColor} ${panelBg} shadow-2xl md:shadow-none`}
+        className={`flex flex-col h-full w-[280px] sm:w-[300px] border-l-2.5 border-black ${panelBg} shadow-neo-lg`}
         style={{
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           opacity: isOpen ? 1 : 0,
@@ -75,17 +69,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         }}
       >
         {/* Header */}
-        <div className={`flex items-center justify-between px-4 py-3 border-b ${borderColor} shrink-0`}>
+        <div className="flex items-center justify-between px-4 py-3 border-b-2.5 border-black bg-neo-yellow text-black font-black shrink-0">
           <div className="flex items-center gap-2">
-            <MessageSquare size={15} className="text-[#CAA4F7]" />
-            <h2 className={`text-xs font-bold uppercase tracking-wider ${textMuted}`}>Room Chat</h2>
+            <MessageSquare size={16} className="text-black" />
+            <h2 className="text-xs font-black uppercase tracking-wider text-black">Room Chat</h2>
           </div>
           {onClose && (
             <button 
               onClick={onClose}
-              className={`md:hidden p-1.5 rounded-md ${textMuted} hover:text-red-500 hover:bg-red-500/10 transition-colors`}
+              className="md:hidden p-1 border border-black bg-neo-pink text-black hover:bg-red-400 font-bold"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
           )}
         </div>
@@ -93,10 +87,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
           {messages.length === 0 && (
-            <div className={`flex flex-col items-center justify-center h-full py-8 ${textMuted}`}>
-              <MessageSquare size={24} className="mb-2 opacity-40" />
-              <p className="text-xs">No messages yet</p>
-              <p className="text-[10px] mt-1 opacity-50">Say hello to your collaborators!</p>
+            <div className="flex flex-col items-center justify-center h-full py-8 text-black/60 dark:text-white/60 font-bold">
+              <MessageSquare size={28} className="mb-2 opacity-60" />
+              <p className="text-xs font-black uppercase tracking-wide">No Messages Yet</p>
+              <p className="text-[10px] mt-1 font-semibold">Say hello to your collaborators!</p>
             </div>
           )}
           {messages.map((msg) => {
@@ -106,25 +100,25 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 <div className="flex items-center gap-1.5 mb-1 mx-1">
                   {!isSelf && (
                     <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0"
+                      className="w-4 h-4 border border-black flex items-center justify-center text-[8px] font-black text-black shrink-0 shadow-neo-sm"
                       style={{ backgroundColor: msg.color }}
                     >
                       {msg.displayName.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className={`text-[10px] font-semibold ${isSelf ? 'text-[#CAA4F7]' : textMuted}`}>
+                  <span className={`text-[10px] font-black uppercase ${isSelf ? 'text-neo-yellow dark:text-neo-purple' : textMuted}`}>
                     {isSelf ? 'You' : msg.displayName}
                   </span>
-                  <span className={`text-[9px] ${textMuted} opacity-50`}>
+                  <span className={`text-[9px] font-bold ${textMuted} opacity-70`}>
                     {formatTime(msg.timestamp)}
                   </span>
                 </div>
 
                 <div
-                  className={`px-3 py-2 rounded-lg text-[12px] max-w-[85%] leading-relaxed ${
+                  className={`px-3 py-2 border-2 border-black text-[12px] max-w-[85%] font-bold leading-relaxed shadow-neo-sm ${
                     isSelf
-                      ? `${selfBubble} rounded-tr-sm`
-                      : `${otherBubble} rounded-tl-sm`
+                      ? 'bg-neo-purple text-black'
+                      : 'bg-white dark:bg-slate-800 text-black dark:text-white'
                   }`}
                 >
                   {msg.text}
@@ -136,25 +130,25 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         </div>
 
         {/* Input Area */}
-        <div className={`p-3 border-t ${borderColor} shrink-0`}>
+        <div className="p-3 border-t-2.5 border-black shrink-0 bg-white dark:bg-[#12131C]">
           <form onSubmit={handleSend} className="relative">
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Type a message..."
-              className={`w-full pl-3 pr-10 py-2 rounded-lg text-[12px] focus:outline-none transition-colors border ${inputBg} ${textPrimary} placeholder:text-slate-400/60 focus:ring-1 focus:ring-[#CAA4F7]/50 focus:border-[#CAA4F7]/50`}
+              className="w-full pl-3 pr-10 py-2 border-2 border-black shadow-neo-sm text-[12px] font-bold outline-none bg-white dark:bg-slate-800 text-black dark:text-white placeholder:text-slate-500 focus:bg-neo-yellow/20"
             />
             <button
               type="submit"
               disabled={!inputValue.trim()}
-              className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors ${
+              className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 border-1.5 border-black transition-all ${
                 !inputValue.trim()
-                  ? 'opacity-30 cursor-not-allowed'
-                  : 'text-[#CAA4F7] hover:bg-[#CAA4F7]/10'
+                  ? 'opacity-30 cursor-not-allowed bg-slate-300'
+                  : 'bg-neo-green text-black hover:bg-neo-yellow active:translate-x-0.5 active:translate-y-0.5 shadow-neo-sm'
               }`}
             >
-              <Send size={14} />
+              <Send size={13} />
             </button>
           </form>
         </div>
@@ -162,3 +156,4 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     </div>
   );
 };
+

@@ -8,12 +8,20 @@ import { SharedFileInfo } from '../services/collabService';
 import { useTheme } from '../hooks/useTheme';
 import { detectLanguage, detectLanguageAI } from '../utils/detectLanguage';
 import {
-  FileCode, Plus, Upload, Code2, FolderOpen, Sun, Moon, Github, Users, X, MessageSquare, PanelRightClose, Menu
+  FileCode, Plus, Upload, Code2, FolderOpen, Sun, Moon, Github, Users, X, MessageSquare, PanelRightClose, Menu, Play, Sparkles, Search
 } from 'lucide-react';
 import { ChatPanel } from './ChatPanel';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './ui/accordion';
+import { EditorTabs } from './EditorTabs';
+import { ExecutionTerminal } from './ExecutionTerminal';
+import { CommandPalette } from './CommandPalette';
+import { formatCode } from '../utils/codeFormatter';
+
 import {
   JavaScript, TypeScript, Python, CPlusPlus, C, Java, Go, RustDark, Ruby, PHP
 } from 'developer-icons';
+
+
 
 const langIconMap: Record<string, { icon: any }> = {
   JavaScript: { icon: JavaScript },
@@ -105,8 +113,30 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [openFileIds, setOpenFileIds] = useState<string[]>([]);
   const [cursorPosition, setCursorPosition] = useState({ ln: 1, col: 1 });
   const [selectionCount, setSelectionCount] = useState(0);
+
+  // Global Ctrl+K / Ctrl+P listener in DOM Capture Phase
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const isCmdOrCtrl = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+
+      if (isCmdOrCtrl && (key === 'k' || key === 'p')) {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown, true);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, true);
+  }, []);
+
+
   const [fontSize] = useState(() => {
     const saved = localStorage.getItem('editor-font-size');
     return saved ? parseInt(saved, 10) : 16;
@@ -114,10 +144,52 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const hasInitializedTabs = useRef(false);
+
+  // Sync open files with active file selection
+  useEffect(() => {
+    if (activeFileId && !openFileIds.includes(activeFileId)) {
+      setOpenFileIds(prev => [...prev, activeFileId]);
+    }
+  }, [activeFileId, openFileIds]);
+
+  // Initial one-time tab setup when files load
+  useEffect(() => {
+    if (!hasInitializedTabs.current && files.length > 0) {
+      hasInitializedTabs.current = true;
+      if (activeFileId) {
+        setOpenFileIds([activeFileId]);
+      }
+    }
+  }, [files, activeFileId]);
+
+  const handleCloseTab = (fileId: string) => {
+    const nextOpen = openFileIds.filter(id => id !== fileId);
+    setOpenFileIds(nextOpen);
+    if (activeFileId === fileId) {
+      if (nextOpen.length > 0) {
+        onFileSelect(nextOpen[nextOpen.length - 1]);
+      } else {
+        // Return to welcome screen when all tabs are closed
+        onFileSelect('');
+      }
+    }
+  };
+
+
+  const handleFormatCode = () => {
+    if (!activeFile) return;
+    const formatted = formatCode(activeFile.content, activeFile.language);
+    if (formatted !== activeFile.content) {
+      onCodeChange(activeFile.id, formatted);
+    }
+  };
+
   useEffect(() => {
     setCursorPosition({ ln: 1, col: 1 });
     setSelectionCount(0);
   }, [activeFileId]);
+
 
   // Detect language
   useEffect(() => {
@@ -201,55 +273,66 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
   return (
     <div className={`flex flex-col h-screen ${bg} text-slate-300 overflow-hidden`}>
-      <header className={`h-14 flex items-center justify-between px-4 ${isDark ? 'bg-[#181821]' : 'bg-[#DBDFE7]'} z-20 shadow-sm border-b ${isDark ? 'border-slate-800/50' : 'border-slate-300/50'}`}>
+      <header className={`h-14 flex items-center justify-between px-4 ${isDark ? 'bg-[#181C2A]' : 'bg-[#FFF9EA]'} z-20 border-b-2.5 border-black shadow-neo-sm`}>
+
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className={`md:hidden p-1.5 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-200'}`}
+            className={`md:hidden p-1.5 border-2 border-black rounded-none shadow-neo-sm transition-transform active:translate-x-0.5 active:translate-y-0.5 ${isDark ? 'bg-neo-purple text-black' : 'bg-neo-yellow text-black'}`}
             aria-label="Open Sidebar"
           >
             <Menu size={20} />
           </button>
-          <img src="/CodeCollab-logo.png" alt="CodeCollab Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
-          <span className={`hidden sm:inline font-black tracking-tighter quantico-font text-[24px] sm:text-[28px] ${textPrimary} select-none`}>
+          <img src="/CodeCollab-logo.png" alt="CodeCollab Logo" className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
+          <span className={`hidden sm:inline font-black tracking-tight quantico-font text-[24px] sm:text-[26px] ${textPrimary} select-none drop-shadow-[2px_2px_0px_#000]`}>
             CodeCollab
           </span>
+          <button
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 border-2 border-black bg-white dark:bg-slate-800 text-black dark:text-white shadow-neo-sm font-black text-xs transition-all hover:bg-neo-yellow hover:text-black active:translate-x-0.5 active:translate-y-0.5 ml-2"
+          >
+            <Search size={14} className="text-black dark:text-white" />
+            <span className="font-bold">Search / Commands</span>
+            <span className="neo-badge bg-neo-yellow text-black text-[9px] px-1.5 py-0.2">Ctrl+K</span>
+          </button>
           <button 
             onClick={toggleTheme} 
-            className={`relative flex items-center justify-center w-8 h-8 ml-1 transition-colors ${isDark ? 'text-slate-400 hover:text-amber-300' : 'text-slate-500 hover:text-blue-500'}`}
+            className="relative flex items-center justify-center w-9 h-9 ml-2 border-2 border-black bg-neo-yellow text-black shadow-neo-sm font-black transition-all hover:bg-neo-purple active:translate-x-0.5 active:translate-y-0.5"
             aria-label="Toggle Theme"
           >
             <Sun 
-              size={20} 
-              className={`absolute transition-all duration-500 ease-in-out ${isDark ? 'scale-100 rotate-0 opacity-100' : 'scale-0 -rotate-90 opacity-0'}`} 
+              size={18} 
+              className={`absolute transition-all duration-300 text-black ${isDark ? 'scale-100 rotate-0 opacity-100' : 'scale-0 -rotate-90 opacity-0'}`} 
             />
             <Moon 
-              size={20} 
-              className={`absolute transition-all duration-500 ease-in-out ${isDark ? 'scale-0 rotate-90 opacity-0' : 'scale-100 rotate-0 opacity-100'}`} 
+              size={18} 
+              className={`absolute transition-all duration-300 text-black ${isDark ? 'scale-0 rotate-90 opacity-0' : 'scale-100 rotate-0 opacity-100'}`} 
             />
           </button>
         </div>
+
 
         <div className="flex items-center gap-2">
           {isInRoom && (
             <button
               onClick={() => setIsChatOpen(prev => !prev)}
-              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all active:scale-95 ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-1.5 border-2 border-black shadow-neo-sm font-bold text-xs transition-all active:translate-x-0.5 active:translate-y-0.5 ${
                 isChatOpen
-                  ? isDark ? 'bg-[#CAA4F7]/20 text-[#CAA4F7]' : 'bg-[#CAA4F7]/15 text-[#9B6DD7]'
-                  : isDark ? 'text-slate-400 hover:bg-slate-700/50 hover:text-[#CAA4F7]' : 'text-slate-500 hover:bg-slate-200 hover:text-[#9B6DD7]'
+                  ? 'bg-neo-pink text-black'
+                  : 'bg-neo-blue text-black hover:bg-neo-purple'
               }`}
               title={isChatOpen ? 'Close Chat' : 'Open Chat'}
             >
-              {isChatOpen ? <PanelRightClose size={18} /> : <MessageSquare size={18} />}
+              {isChatOpen ? <PanelRightClose size={16} /> : <MessageSquare size={16} />}
+              <span className="hidden sm:inline">CHAT</span>
             </button>
           )}
           {!isInRoom && (
             <button
               onClick={onOpenCollab}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#CAA4F7]/15 hover:bg-[#CAA4F7]/25 text-[#CAA4F7] text-xs font-bold transition-all active:scale-95 border border-[#CAA4F7]/20"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 neo-btn bg-neo-purple text-black text-xs font-black uppercase tracking-wider"
             >
-              <Users size={14} /> Collab
+              <Users size={15} /> Collab Room
             </button>
           )}
         </div>
@@ -259,43 +342,44 @@ export const EditorView: React.FC<EditorViewProps> = ({
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
           <div 
-            className="fixed inset-0 z-40 bg-black/50 md:hidden backdrop-blur-sm transition-opacity" 
+            className="fixed inset-0 z-40 bg-black/60 md:hidden transition-opacity" 
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         {/* Sidebar */}
         <div className={`
-          fixed md:relative inset-y-0 left-0 z-50 w-[280px] md:w-64 transform transition-transform duration-300 ease-in-out md:transform-none flex flex-col ${bg} border-r ${isDark ? 'border-slate-800/50' : 'border-slate-300/50'} md:border-r-0
+          fixed md:relative inset-y-0 left-0 z-50 w-[280px] md:w-64 transform transition-transform duration-300 ease-in-out md:transform-none flex flex-col ${bg} border-r-2.5 border-black md:border-r-2.5
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
-          <div className={`flex md:hidden items-center justify-between px-4 py-3 border-b ${isDark ? 'border-slate-800/50' : 'border-slate-300/50'}`}>
-            <span className={`font-bold ${textPrimary}`}>Files</span>
-            <button onClick={() => setIsSidebarOpen(false)} className={`p-1.5 rounded-md ${textMuted} hover:bg-red-500/10 hover:text-red-500 transition-colors`}>
-              <X size={20} />
+          <div className={`flex md:hidden items-center justify-between px-4 py-3 border-b-2 border-black bg-neo-yellow text-black font-black`}>
+            <span className="uppercase tracking-wider">Snippets & Files</span>
+            <button onClick={() => setIsSidebarOpen(false)} className="p-1 border-1.5 border-black bg-neo-pink text-black hover:bg-red-400 font-bold">
+              <X size={18} />
             </button>
           </div>
-          <div className="px-2 pt-4 pb-2 space-y-2">
+          <div className="px-3 pt-3 pb-2 space-y-2">
             <div className="flex gap-2">
-              <button onClick={onFileCreate} className="flex-1 flex items-center justify-center gap-2 bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95">
-                <Plus size={14} /> New Snippet
+              <button onClick={onFileCreate} className="flex-1 flex items-center justify-center gap-1.5 bg-neo-green hover:bg-neo-yellow text-black py-2.5 px-3 border-2 border-black shadow-neo-sm text-xs font-black uppercase tracking-wide transition-all active:translate-x-0.5 active:translate-y-0.5">
+                <Plus size={16} className="text-black" /> New Snippet
               </button>
-              <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center px-3 rounded-lg bg-[#CAA4F7]/20 hover:bg-[#CAA4F7]/30 text-[#CAA4F7] border border-[#CAA4F7]/30 transition-all active:scale-95 shadow-sm" title="Upload File">
-                <Upload size={14} />
+              <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center px-3 py-2.5 bg-neo-blue hover:bg-neo-purple text-black border-2 border-black shadow-neo-sm transition-all active:translate-x-0.5 active:translate-y-0.5" title="Upload File">
+                <Upload size={16} className="text-black" />
               </button>
               <input type="file" ref={fileInputRef} className="hidden" accept=".js,.ts,.jsx,.tsx,.py,.cpp,.c,.java,.go,.rs,.rb,.php" onChange={handleFileUpload} />
             </div>
             <button onClick={onOpenGitHub}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all border ${isDark ? 'bg-[#232340] hover:bg-[#2a2a50] text-slate-300 border-slate-700/50 hover:border-purple-500/50' : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-300 hover:border-purple-400'} active:scale-[0.98] shadow-sm`}>
-              <Github size={14} /> Import from GitHub
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-neo-purple hover:bg-neo-yellow text-black border-2 border-black shadow-neo-sm text-xs font-black uppercase tracking-wide transition-all active:translate-x-0.5 active:translate-y-0.5">
+              <Github size={16} className="text-black" /> Import from GitHub
             </button>
           </div>
 
+
           <div className="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar">
             {files.length === 0 && !(isInRoom && collab.sharedFiles.length > 0) ? (
-              <div className={`flex flex-col items-center justify-center h-full py-8 ${textMuted}`}>
-                <FolderOpen size={28} className="mb-3 opacity-50" />
-                <p className="text-xs text-center">No snippets yet</p>
+              <div className={`flex flex-col items-center justify-center h-full py-8 text-black/60 dark:text-white/60 font-bold`}>
+                <FolderOpen size={32} className="mb-2 opacity-70" />
+                <p className="text-xs text-center uppercase tracking-wide">No Snippets Yet</p>
               </div>
             ) : (
               <FileExplorer
@@ -319,19 +403,161 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
         <div className="flex-1 flex flex-col min-w-0">
           {!activeFile ? (
-            <div className={`flex-1 flex flex-col items-center justify-center ${bgEditor}`}>
-              <div className="text-center max-w-md px-8">
-                <FolderOpen size={48} className={`mx-auto mb-8 ${isDark ? 'text-blue-400/50' : 'text-blue-500/50'}`} />
-                <h2 className={`text-xl font-semibold mb-2 ${textPrimary}`}>Welcome to CodeCollab</h2>
-                <div className="flex gap-4 justify-center">
-                  <button onClick={onFileCreate} className="flex items-center gap-2 px-6 py-3 bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] rounded-lg text-sm font-medium transition-colors shadow-md">
-                    <Plus size={18} /> New Snippet
+            <div className={`flex-1 flex flex-col items-center justify-center p-4 md:p-8 overflow-y-auto custom-scrollbar ${bgEditor}`}>
+              <div className="max-w-3xl w-full space-y-5">
+                
+                {/* Windowed Header Frame */}
+                <div className="border-3 border-black bg-white dark:bg-[#181C2A] shadow-neo-xl overflow-hidden text-left">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-neo-yellow text-black border-b-2.5 border-black font-black">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 rounded-full bg-[#FF5F56] border border-black inline-block" />
+                        <span className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-black inline-block" />
+                        <span className="w-3 h-3 rounded-full bg-[#27C93F] border border-black inline-block" />
+                      </div>
+                      <span className="text-xs font-mono tracking-wider uppercase ml-2">codecollab.workspace // v3.0</span>
+                    </div>
+                    <span className="neo-badge bg-neo-green text-black px-2 py-0.5 text-[9px]">
+                      ● LIVE SYNC
+                    </span>
+                  </div>
+
+                  <div className="p-6 md:p-8 space-y-4">
+                    <div className="inline-flex items-center gap-2 neo-badge bg-neo-purple text-black px-3 py-1 text-xs">
+                      <span>🚀 NEOBRUTALISM BENTO TEMPLATE</span>
+                    </div>
+                    <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-black dark:text-white drop-shadow-[3px_3px_0px_#000]">
+                      REAL-TIME COLLABORATIVE CODE EDITOR
+                    </h1>
+                    <p className="text-sm md:text-base font-bold text-slate-700 dark:text-slate-300 max-w-2xl leading-relaxed">
+                      Zero-install browser IDE powered by Yjs CRDTs, Monaco Editor, FastAPI REST server, and dual-channel WebSockets.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Neobrutalism Bento Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                  
+                  {/* Bento Tile 1: New Snippet */}
+                  <button
+                    onClick={onFileCreate}
+                    className="p-5 border-3 border-black bg-neo-green text-black shadow-neo hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all active:translate-x-1 active:translate-y-1 flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between w-full mb-3">
+                      <div className="w-9 h-9 border-2 border-black bg-white text-black flex items-center justify-center font-black shadow-neo-sm">
+                        <Plus size={20} className="text-black" />
+                      </div>
+                      <span className="neo-badge bg-white text-black px-2 py-0.5 text-[9px] font-black">INSTANT</span>
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base uppercase text-black">New Snippet</h3>
+                      <p className="text-xs font-bold text-black opacity-90 mt-1">Create a fresh scratchpad with syntax highlighting</p>
+                    </div>
+                  </button>
+
+                  {/* Bento Tile 2: Host Room */}
+                  <button
+                    onClick={onOpenCollab}
+                    className="p-5 border-3 border-black bg-neo-yellow text-black shadow-neo hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all active:translate-x-1 active:translate-y-1 flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between w-full mb-3">
+                      <div className="w-9 h-9 border-2 border-black bg-white text-black flex items-center justify-center font-black shadow-neo-sm">
+                        <Users size={20} className="text-black" />
+                      </div>
+                      <span className="neo-badge bg-white text-black px-2 py-0.5 text-[9px] font-black">MULTIPLAYER</span>
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base uppercase text-black">Host Room</h3>
+                      <p className="text-xs font-bold text-black opacity-90 mt-1">Generate 6-character room invite code</p>
+                    </div>
+                  </button>
+
+                  {/* Bento Tile 3: GitHub Import */}
+                  <button
+                    onClick={onOpenGitHub}
+                    className="p-5 border-3 border-black bg-neo-purple text-black shadow-neo hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all active:translate-x-1 active:translate-y-1 flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between w-full mb-3">
+                      <div className="w-9 h-9 border-2 border-black bg-white text-black flex items-center justify-center font-black shadow-neo-sm">
+                        <Github size={20} className="text-black" />
+                      </div>
+                      <span className="neo-badge bg-white text-black px-2 py-0.5 text-[9px] font-black">OAUTH 2.0</span>
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base uppercase text-black">Import Repo</h3>
+                      <p className="text-xs font-bold text-black opacity-90 mt-1">Fetch files directly from public or private repos</p>
+                    </div>
                   </button>
                 </div>
+
+                {/* Tech Stack Bento Banner */}
+                <div className="border-3 border-black bg-neo-blue text-black p-5 shadow-neo text-left">
+                  <h3 className="text-xs font-black uppercase tracking-wider mb-3 text-black">
+                    ⚡ ARCHITECTURE & TECH STACK HIGHLIGHTS
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 border-2 border-black bg-white text-black font-bold text-xs shadow-neo-sm">
+                      <div className="font-black text-black text-sm">Yjs CRDTs</div>
+                      <div className="text-[11px] font-bold text-slate-800">Zero-conflict syncing</div>
+                    </div>
+                    <div className="p-3 border-2 border-black bg-white text-black font-bold text-xs shadow-neo-sm">
+                      <div className="font-black text-black text-sm">Monaco Engine</div>
+                      <div className="text-[11px] font-bold text-slate-800">50+ languages</div>
+                    </div>
+                    <div className="p-3 border-2 border-black bg-white text-black font-bold text-xs shadow-neo-sm">
+                      <div className="font-black text-black text-sm">Node WebSocket</div>
+                      <div className="text-[11px] font-bold text-slate-800">Dual channel ws</div>
+                    </div>
+                    <div className="p-3 border-2 border-black bg-white text-black font-bold text-xs shadow-neo-sm">
+                      <div className="font-black text-black text-sm">FastAPI REST</div>
+                      <div className="text-[11px] font-bold text-slate-800">GitHub OAuth</div>
+                    </div>
+                  </div>
+                </div>
+
+
+                {/* Neo Brutalism Accordion Tile */}
+                <div className="border-3 border-black bg-white dark:bg-[#181C2A] p-5 shadow-neo text-left">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-black dark:text-white mb-3">
+                    Frequently Asked Questions
+                  </h3>
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                      <AccordionTrigger>How does real-time document sync work?</AccordionTrigger>
+                      <AccordionContent>
+                        CodeCollab uses <strong>Yjs CRDTs</strong> (Conflict-free Replicated Data Types) over a binary WebSocket channel (`/doc/:roomId/:fileId`). Every edit updates local state and broadcasts deltas deterministically.
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                      <AccordionTrigger>How do I invite teammates?</AccordionTrigger>
+                      <AccordionContent>
+                        Click <strong>Collab Room</strong>, enter your display name, and copy the generated 6-character room code. Share it with your team so they can send join requests.
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-3">
+                      <AccordionTrigger>Is my code secure?</AccordionTrigger>
+                      <AccordionContent>
+                        All room session state lives in memory on the collaboration server for the session duration. Nothing is logged to external databases.
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+
               </div>
             </div>
           ) : (
-            <div className="flex-1 relative overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
+              {/* Multi-Tab File Editor Navigation */}
+              <EditorTabs
+                files={files}
+                openFileIds={openFileIds}
+                activeFileId={activeFileId}
+                onSelectTab={onFileSelect}
+                onCloseTab={handleCloseTab}
+                onNewTab={onFileCreate}
+                isDark={isDark}
+              />
+
               {/* Waiting overlay */}
               {collab.status === 'waiting-approval' && (
                 <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center ${isDark ? 'bg-[#1e1e2e]/90' : 'bg-[#eff1f5]/90'} backdrop-blur-sm`}>
@@ -350,26 +576,36 @@ export const EditorView: React.FC<EditorViewProps> = ({
               )}
 
               {/* Collab editor for shared files, standard editor otherwise */}
-              {isActiveFileShared && collab.provider && collab.status === 'connected' ? (
-                <CollabMonacoEditor
-                  file={activeFile}
-                  theme={isDark ? 'dark' : 'light'}
-                  fontSize={fontSize}
-                  provider={collab.provider}
-                  onChange={(code) => onCodeChange(activeFile.id, code)}
-                  onCursorChange={(ln, col) => setCursorPosition({ ln, col })}
-                  onSelectionChange={(count) => setSelectionCount(count)}
-                />
-              ) : (
-                <ModernMonacoEditor
-                  file={activeFile}
-                  theme={isDark ? 'dark' : 'light'}
-                  fontSize={fontSize}
-                  onChange={(code) => onCodeChange(activeFile.id, code)}
-                  onCursorChange={(ln, col) => setCursorPosition({ ln, col })}
-                  onSelectionChange={(count) => setSelectionCount(count)}
-                />
-              )}
+              <div className="flex-1 min-h-0 relative">
+                {isActiveFileShared && collab.provider && collab.status === 'connected' ? (
+                  <CollabMonacoEditor
+                    file={activeFile}
+                    theme={isDark ? 'dark' : 'light'}
+                    fontSize={fontSize}
+                    provider={collab.provider}
+                    onChange={(code) => onCodeChange(activeFile.id, code)}
+                    onCursorChange={(ln, col) => setCursorPosition({ ln, col })}
+                    onSelectionChange={(count) => setSelectionCount(count)}
+                  />
+                ) : (
+                  <ModernMonacoEditor
+                    file={activeFile}
+                    theme={isDark ? 'dark' : 'light'}
+                    fontSize={fontSize}
+                    onChange={(code) => onCodeChange(activeFile.id, code)}
+                    onCursorChange={(ln, col) => setCursorPosition({ ln, col })}
+                    onSelectionChange={(count) => setSelectionCount(count)}
+                  />
+                )}
+              </div>
+
+              {/* In-Browser Execution Terminal */}
+              <ExecutionTerminal
+                file={activeFile}
+                isOpen={isTerminalOpen}
+                onClose={() => setIsTerminalOpen(false)}
+                isDark={isDark}
+              />
             </div>
           )}
         </div>
@@ -387,32 +623,53 @@ export const EditorView: React.FC<EditorViewProps> = ({
       </div>
 
       {/* Status bar */}
-      <div className={`h-8 flex items-center justify-between px-2 sm:px-4 text-[10px] sm:text-[12px] kode-font font-black ${isDark ? 'bg-[#181821] text-white/70' : 'bg-[#DBDFE7] text-slate-500/30'} relative`}>
+      <div className={`h-9 flex items-center justify-between px-2 sm:px-4 text-[10px] sm:text-[12px] kode-font font-black border-t-2.5 border-black ${isDark ? 'bg-[#181C2A] text-neo-yellow' : 'bg-[#FFF9EA] text-black'} relative`}>
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 h-4">
             <FileCode size={14} className="hidden sm:block" />
             <span>{files.length} FILES</span>
           </div>
           {activeFile && (
-            <div className="flex items-center animate-fade-in">
-              <div className={`flex items-center gap-2 h-6 transition-colors ${isDark ? 'text-white/70' : 'text-slate-500/30'}`}>
-                <LanguageIcon language={activeFile.language} size={14} colorOverride="text-current opacity-70" />
-                <span>{activeFile.language ? activeFile.language.toUpperCase() : 'AUTO DETECTING...'}</span>
+            <div className="flex items-center gap-2">
+              <div className={`flex items-center gap-2 h-6 transition-colors font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <LanguageIcon language={activeFile.language} size={14} colorOverride="text-current" />
+                <span className="neo-badge bg-neo-green text-black px-1.5 py-0.5 text-[9px]">{activeFile.language ? activeFile.language.toUpperCase() : 'AUTO DETECTING...'}</span>
               </div>
             </div>
           )}
         </div>
-        <div className="flex items-center gap-3">
+
+        {/* Status Bar Advanced Controls */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {activeFile && (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5 h-4">
-                <Code2 size={14} className="hidden sm:block" />
-                <span>LN {cursorPosition.ln}, COL {cursorPosition.col} <span className="hidden sm:inline">{selectionCount > 0 && `(${selectionCount} selected)`}</span></span>
+            <>
+              <button
+                onClick={handleFormatCode}
+                className="flex items-center gap-1 px-2 py-0.5 border-1.5 border-black bg-neo-purple text-black font-black text-[10px] uppercase shadow-neo-sm hover:bg-neo-yellow transition-all active:translate-x-0.5 active:translate-y-0.5"
+                title="Format Code (Shift+Alt+F)"
+              >
+                <Sparkles size={11} /> FORMAT
+              </button>
+
+              <button
+                onClick={() => setIsTerminalOpen(prev => !prev)}
+                className={`flex items-center gap-1 px-2 py-0.5 border-1.5 border-black font-black text-[10px] uppercase shadow-neo-sm transition-all active:translate-x-0.5 active:translate-y-0.5 ${
+                  isTerminalOpen ? 'bg-neo-pink text-black' : 'bg-neo-green text-black hover:bg-neo-yellow'
+                }`}
+                title="Toggle Code Execution Terminal"
+              >
+                <Play size={11} className="fill-black" /> RUN CODE
+              </button>
+
+              <div className="flex items-center gap-1.5 h-4 font-bold hidden md:flex">
+                <Code2 size={14} />
+                <span>LN {cursorPosition.ln}, COL {cursorPosition.col} {selectionCount > 0 && `(${selectionCount} selected)`}</span>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
+
 
       {/* Collab bar */}
       {isInRoom && collab.roomId && (
@@ -456,6 +713,26 @@ export const EditorView: React.FC<EditorViewProps> = ({
           ))}
         </div>
       )}
+
+      {/* Command Palette Modal (Ctrl+K) */}
+
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        files={files}
+        activeFileId={activeFileId}
+        onSelectFile={onFileSelect}
+        onFileCreate={onFileCreate}
+        onUploadFile={() => fileInputRef.current?.click()}
+        onFormatCode={handleFormatCode}
+        onRunCode={() => setIsTerminalOpen(true)}
+        onOpenCollab={onOpenCollab}
+        onOpenGitHub={onOpenGitHub}
+        onToggleTheme={toggleTheme}
+      />
+
+
     </div>
   );
 };
+

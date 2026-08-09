@@ -45,13 +45,11 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
 
   if (!hasRendered) return null;
 
-  const bg = isDark ? 'bg-[#1a1a2e]' : 'bg-white';
-  const border = isDark ? 'border-slate-700/50' : 'border-slate-200';
-  const textP = isDark ? 'text-white' : 'text-slate-900';
-  const textM = isDark ? 'text-slate-400' : 'text-slate-500';
-  const inputBg = isDark ? 'bg-[#232340]' : 'bg-slate-100';
-  const inputBorder = isDark ? 'border-slate-600' : 'border-slate-300';
-  const inputText = isDark ? 'text-white' : 'text-slate-900';
+  const bg = isDark ? 'bg-[#181C2A]' : 'bg-white';
+  const inputBg = isDark ? 'bg-slate-800' : 'bg-slate-50';
+  const inputBorder = 'border-2.5 border-black shadow-neo-sm';
+  const inputText = isDark ? 'text-white font-bold' : 'text-black font-bold';
+
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(generatedId);
@@ -69,46 +67,45 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
     if (!displayName.trim() || !roomId.trim()) return;
     onClearJoinError?.();
     onJoinRoom(displayName.trim(), roomId.trim().toUpperCase());
-    // Don't close — wait for approval or show error
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       {/* Backdrop */}
-      <div className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+      <div className={`absolute inset-0 bg-black/70 transition-opacity duration-300 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`} />
 
       {/* Modal */}
       <div
-        className={`relative w-full max-w-md mx-4 rounded-2xl ${bg} border ${border} shadow-2xl overflow-hidden transition-all duration-300 ease-out transform ${isActive ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0'}`}
+        className={`relative w-full max-w-md mx-4 ${bg} border-3 border-black shadow-neo-xl overflow-hidden transition-all duration-300 ease-out transform ${isActive ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0'}`}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 border-b ${border}`}>
+        <div className="flex items-center justify-between px-6 py-4 border-b-2.5 border-black bg-neo-yellow text-black font-black">
           <div className="flex items-center gap-2">
-            <Users size={20} className="text-[#CAA4F7]" />
-            <h2 className={`text-lg font-bold ${textP}`}>Live Collaboration</h2>
+            <Users size={22} className="text-black" />
+            <h2 className="text-lg font-black uppercase tracking-wide">Live Collaboration</h2>
           </div>
-          <button onClick={onClose} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}>
-            <X size={18} className={textM} />
+          <button onClick={onClose} className="p-1 border-2 border-black bg-neo-pink text-black hover:bg-red-400 font-bold">
+            <X size={18} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className={`flex border-b ${border}`}>
+        <div className="flex border-b-2.5 border-black bg-slate-100 dark:bg-slate-900">
           {(['create', 'join'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-bold transition-all relative ${
+              className={`flex-1 py-3 text-sm font-black uppercase tracking-wide transition-all ${
                 tab === t
-                  ? `${textP} after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#CAA4F7]`
-                  : `${textM} hover:${textP}`
+                  ? 'bg-neo-purple text-black border-r-2 border-l-2 border-black shadow-neo-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
               }`}
             >
               {t === 'create' ? (
-                <span className="flex items-center justify-center gap-1.5"><Plus size={14} /> Host Room</span>
+                <span className="flex items-center justify-center gap-1.5"><Plus size={15} /> Host Room</span>
               ) : (
-                <span className="flex items-center justify-center gap-1.5"><LogIn size={14} /> Join Room</span>
+                <span className="flex items-center justify-center gap-1.5"><LogIn size={15} /> Join Room</span>
               )}
             </button>
           ))}
@@ -116,16 +113,16 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
 
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
-          {/* Display Name (shared by both tabs) */}
+          {/* Display Name */}
           <div>
-            <label className={`block text-xs font-bold mb-1.5 ${textM}`}>DISPLAY NAME</label>
+            <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-slate-800 dark:text-slate-200">DISPLAY NAME</label>
             <input
               type="text"
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
-              placeholder="e.g. John"
+              placeholder="e.g. Alex"
               maxLength={30}
-              className={`w-full px-3 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${inputText} text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#CAA4F7]/50 focus:border-[#CAA4F7] transition-all`}
+              className={`w-full px-3 py-2.5 ${inputBg} ${inputBorder} ${inputText} text-sm outline-none placeholder:text-slate-400 focus:bg-neo-yellow/20`}
             />
           </div>
 
@@ -138,17 +135,17 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
             >
               {/* Generated Room ID */}
               <div>
-                <label className={`block text-xs font-bold mb-1.5 ${textM}`}>ROOM ID</label>
+                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-slate-800 dark:text-slate-200">ROOM CODE</label>
                 <div className="flex gap-2">
-                  <div className={`flex-1 flex items-center px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} font-mono text-lg tracking-[0.3em] ${textP} font-bold select-all`}>
+                  <div className={`flex-1 flex items-center px-4 py-2.5 ${inputBg} ${inputBorder} font-mono text-xl tracking-[0.3em] font-black text-black dark:text-white select-all bg-neo-yellow/30`}>
                     {generatedId}
                   </div>
                   <button
                     onClick={handleCopyId}
-                    className="flex items-center justify-center px-3 rounded-lg bg-[#CAA4F7]/20 hover:bg-[#CAA4F7]/30 text-[#CAA4F7] border border-[#CAA4F7]/30 transition-all active:scale-95"
+                    className="flex items-center justify-center px-4 border-2.5 border-black bg-neo-blue hover:bg-neo-purple text-black font-bold shadow-neo-sm transition-all active:translate-x-0.5 active:translate-y-0.5"
                     title="Copy Room ID"
                   >
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                    {copied ? <Check size={18} /> : <Copy size={18} />}
                   </button>
                 </div>
               </div>
@@ -156,7 +153,7 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
               <button
                 onClick={handleCreate}
                 disabled={!displayName.trim()}
-                className="w-full py-3 rounded-lg bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none shadow-md mt-auto"
+                className="w-full py-3 neo-btn bg-neo-green hover:bg-neo-yellow text-black font-black text-sm uppercase tracking-wide disabled:opacity-40 disabled:pointer-events-none mt-2"
               >
                 Create & Host Room
               </button>
@@ -170,26 +167,24 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
             >
               {/* Room ID input */}
               <div>
-                <label className={`block text-xs font-bold mb-1.5 ${textM}`}>ROOM ID</label>
+                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-slate-800 dark:text-slate-200">ENTER ROOM CODE</label>
                 <input
                   type="text"
                   value={roomId}
                   onChange={e => { setRoomId(e.target.value.toUpperCase()); onClearJoinError?.(); }}
                   placeholder="e.g. A3K7M2"
                   maxLength={10}
-                  className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${
-                    joinError ? 'border-red-400 ring-2 ring-red-400/30' : inputBorder
-                  } font-mono text-lg tracking-[0.3em] font-bold ${textP} placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#CAA4F7]/50 focus:border-[#CAA4F7] transition-all uppercase`}
+                  className={`w-full px-4 py-2.5 ${inputBg} ${inputBorder} font-mono text-xl tracking-[0.3em] font-black ${inputText} outline-none uppercase focus:bg-neo-yellow/20`}
                 />
                 {joinError && (
-                  <p className="text-xs mt-1.5 text-red-400 font-medium">{joinError}</p>
+                  <p className="text-xs mt-1.5 text-red-500 font-black">{joinError}</p>
                 )}
               </div>
 
               <button
                 onClick={handleJoin}
                 disabled={!displayName.trim() || !roomId.trim()}
-                className="w-full py-3 rounded-lg bg-[#CAA4F7] hover:bg-[#D4B5F9] text-[#1E1E2A] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none shadow-md mt-auto"
+                className="w-full py-3 neo-btn bg-neo-green hover:bg-neo-yellow text-black font-black text-sm uppercase tracking-wide disabled:opacity-40 disabled:pointer-events-none mt-2"
               >
                 Request to Join
               </button>
@@ -200,3 +195,4 @@ export const CollabRoomModal: React.FC<Props> = ({ isOpen, onClose, onCreateRoom
     </div>
   );
 };
+

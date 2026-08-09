@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@radix-ui/react-accordion": "^1.2.20",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "developer-icons": "^6.0.5",
     "lib0": "^0.2.117",
     "lucide-react": "^0.563.0",
@@ -17,6 +20,7 @@
     "monaco-editor": "^0.53.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.6.0",
     "y-monaco": "^0.1.6",
     "y-protocols": "^1.0.7",
     "y-websocket": "^3.0.0",

@@ -217,43 +217,43 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
   if (!hasRendered) return null;
 
   // Style tokens
-  const bg = isDark ? 'bg-[#1a1a2e]' : 'bg-white';
-  const border = isDark ? 'border-slate-700/50' : 'border-slate-200';
-  const text = isDark ? 'text-slate-200' : 'text-slate-800';
-  const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
-  const inputBg = isDark ? 'bg-[#232340] border-slate-600/50 text-white placeholder:text-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400';
-  const hoverBg = isDark ? 'hover:bg-[#2a2a45]' : 'hover:bg-slate-50';
+  const bg = isDark ? 'bg-[#181C2A]' : 'bg-white';
+  const border = 'border-2.5 border-black';
+  const text = isDark ? 'text-white' : 'text-slate-900';
+  const textMuted = isDark ? 'text-slate-400' : 'text-slate-600';
+  const inputBg = isDark ? 'bg-slate-800 text-white' : 'bg-slate-50 text-black';
+  const hoverBg = isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={resetAndClose}>
-      <div className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`} />
-      <div className={`relative ${bg} rounded-2xl shadow-2xl border ${border} w-[640px] max-h-[85vh] flex flex-col overflow-hidden transition-all duration-300 ease-out transform ${isActive ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0'}`}
+      <div className={`absolute inset-0 bg-black/70 transition-opacity duration-300 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+      <div className={`relative ${bg} border-3 border-black shadow-neo-xl w-[640px] max-h-[85vh] flex flex-col overflow-hidden transition-all duration-300 ease-out transform ${isActive ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0'}`}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 border-b ${border}`}>
+        <div className="flex items-center justify-between px-6 py-4 border-b-2.5 border-black bg-neo-yellow text-black font-black">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg">
-              <Github size={18} className="text-white" />
+            <div className="w-9 h-9 border-2 border-black bg-neo-purple flex items-center justify-center shadow-neo-sm">
+              <Github size={18} className="text-black" />
             </div>
             <div>
-              <h2 className={`text-lg font-semibold ${text}`}>Import from GitHub</h2>
-              <p className={`text-xs ${textMuted}`}>Paste a link or browse your repos</p>
+              <h2 className="text-lg font-black uppercase tracking-wide">Import from GitHub</h2>
+              <p className="text-xs font-bold text-slate-800">Paste a link or browse your repos</p>
             </div>
           </div>
-          <button onClick={resetAndClose} className={`p-2 rounded-lg ${hoverBg} transition-colors ${textMuted}`}>
+          <button onClick={resetAndClose} className="p-1 border-2 border-black bg-neo-pink text-black hover:bg-red-400 font-bold">
             <X size={18} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className={`flex border-b ${border} px-6`}>
+        <div className="flex border-b-2.5 border-black bg-slate-100 dark:bg-slate-900 px-6">
           {([['url', Link2, 'Paste URL'] as const, ['connect', Github, 'Connect GitHub'] as const]).map(([key, Icon, label]) => (
             <button key={key} onClick={() => setTab(key)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === key
-                ? 'border-purple-500 text-purple-400'
-                : `border-transparent ${textMuted} hover:text-purple-400`}`}>
-              <Icon size={15} />
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-black uppercase tracking-wide border-b-3 transition-colors ${tab === key
+                ? 'border-black bg-neo-purple text-black shadow-neo-sm'
+                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'}`}>
+              <Icon size={16} />
               {label}
             </button>
           ))}
@@ -262,13 +262,14 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
         {/* Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
 
+
           {/* ── Grid Container for URL and Auth to sync height ── */}
           {(tab === 'url' || (tab === 'connect' && browseView === 'auth')) && (
             <div className="grid">
               
               {/* ── URL Tab ────────────────────────────────── */}
               <div className={`col-start-1 row-start-1 p-6 space-y-4 transition-opacity duration-200 ${tab === 'url' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
-                <p className={`text-sm ${textMuted}`}>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                   Paste a public GitHub file link to import it directly into the editor.
                 </p>
                 <div className="space-y-3">
@@ -278,31 +279,31 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
                     onChange={e => { setUrl(e.target.value); setUrlError(''); setUrlSuccess(''); }}
                     onKeyDown={e => e.key === 'Enter' && handleUrlImport()}
                     placeholder="https://github.com/owner/repo/blob/main/file.ts"
-                    className={`w-full px-4 py-3 rounded-xl border text-sm font-mono ${inputBg} focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all`}
+                    className={`w-full px-4 py-3 border-2.5 border-black shadow-neo-sm text-sm font-mono font-bold ${inputBg} focus:outline-none focus:bg-neo-yellow/20`}
                     autoFocus={tab === 'url'}
                   />
                   {urlError && (
-                    <div className="flex items-start gap-2 text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">
+                    <div className="flex items-start gap-2 text-black text-xs bg-neo-pink border-2 border-black font-bold px-3 py-2 shadow-neo-sm">
                       <AlertCircle size={14} className="mt-0.5 shrink-0" /><span>{urlError}</span>
                     </div>
                   )}
                   {urlSuccess && (
-                    <div className="flex items-center gap-2 text-emerald-400 text-xs bg-emerald-500/10 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 text-black text-xs bg-neo-green border-2 border-black font-bold px-3 py-2 shadow-neo-sm">
                       <Check size={14} /><span>{urlSuccess}</span>
                     </div>
                   )}
                   <button onClick={handleUrlImport} disabled={urlLoading || !url.trim()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20">
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 neo-btn bg-neo-green hover:bg-neo-yellow text-black text-sm font-black uppercase tracking-wide disabled:opacity-40 disabled:pointer-events-none">
                     {urlLoading ? <Loader2 size={16} className="animate-spin" /> : <Github size={16} />}
                     {urlLoading ? 'Importing...' : 'Import File'}
                   </button>
                 </div>
                 <div className={`text-xs ${textMuted} space-y-1 pt-2`}>
-                  <p className="font-medium">Supported URL formats:</p>
-                  <code className={`block px-3 py-1.5 rounded-lg ${isDark ? 'bg-[#232340]' : 'bg-slate-100'} text-[11px]`}>
+                  <p className="font-bold text-black dark:text-white">Supported URL formats:</p>
+                  <code className="block px-3 py-1.5 border border-black bg-neo-yellow/20 text-black dark:text-white font-mono text-[11px]">
                     github.com/owner/repo/blob/branch/path/file.ext
                   </code>
-                  <code className={`block px-3 py-1.5 rounded-lg ${isDark ? 'bg-[#232340]' : 'bg-slate-100'} text-[11px]`}>
+                  <code className="block px-3 py-1.5 border border-black bg-neo-yellow/20 text-black dark:text-white font-mono text-[11px]">
                     raw.githubusercontent.com/owner/repo/branch/path/file.ext
                   </code>
                 </div>
@@ -311,21 +312,21 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
               {/* ── Connect Tab (OAuth) ─────────────────── */}
               <div className={`col-start-1 row-start-1 p-6 space-y-5 transition-opacity duration-200 ${tab === 'connect' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
                 <div className="text-center py-4">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-600/20 flex items-center justify-center">
-                    <Github size={32} className={isDark ? 'text-white' : 'text-slate-800'} />
+                  <div className="w-16 h-16 mx-auto mb-4 border-2.5 border-black bg-neo-purple shadow-neo flex items-center justify-center">
+                    <Github size={34} className="text-black" />
                   </div>
-                  <h3 className={`text-base font-semibold mb-1 ${text}`}>Connect your GitHub account</h3>
-                  <p className={`text-sm ${textMuted}`}>
+                  <h3 className="text-base font-black uppercase tracking-wide mb-1 text-black dark:text-white">Connect your GitHub account</h3>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
                     Sign in with GitHub to browse and import files from all your repositories — including private ones.
                   </p>
                 </div>
                 {authError && (
-                  <div className="flex items-start gap-2 text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">
+                  <div className="flex items-start gap-2 text-black text-xs bg-neo-pink border-2 border-black font-bold px-3 py-2 shadow-neo-sm">
                     <AlertCircle size={14} className="mt-0.5 shrink-0" /><span>{authError}</span>
                   </div>
                 )}
                 <button onClick={handleConnect} disabled={authLoading}
-                  className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-[#24292f] to-[#1b1f23] hover:from-[#32383f] hover:to-[#24292f] text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-black/20 border border-white/10">
+                  className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 neo-btn bg-black text-white hover:bg-neo-purple hover:text-black text-sm font-black uppercase tracking-wide disabled:opacity-50">
                   {authLoading ? (
                     <><Loader2 size={18} className="animate-spin" /> Authenticating…</>
                   ) : (
@@ -335,6 +336,7 @@ export const GitHubImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, 
               </div>
             </div>
           )}
+
 
           {/* ── Repos View ────────────────────────────── */}
           {tab === 'connect' && browseView === 'repos' && (

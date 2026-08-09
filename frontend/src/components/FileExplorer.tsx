@@ -108,30 +108,24 @@ function ContextMenu({
   return (
     <div
       ref={ref}
-      className={`fixed z-[100] rounded-lg shadow-xl border py-1 min-w-[180px] animate-fade-in ${
-        isDark
-          ? 'bg-[#232340] border-slate-700/60 text-slate-200'
-          : 'bg-white border-slate-200 text-slate-700'
+      className={`fixed z-[100] border-2.5 border-black shadow-neo py-1 min-w-[180px] font-bold ${
+        isDark ? 'bg-neo-bg-card text-white' : 'bg-white text-black'
       }`}
       style={{ left: state.x, top: state.y }}
     >
       {state.isInCollab ? (
         <button
           onClick={() => { onRemoveFromCollab(state.fileId); onClose(); }}
-          className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
-            isDark ? 'hover:bg-red-500/15 text-red-400' : 'hover:bg-red-50 text-red-500'
-          }`}
+          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold bg-neo-pink text-black hover:bg-red-400 transition-colors"
         >
-          <Minus size={13} /> Remove from Collab
+          <Minus size={14} /> Remove from Collab
         </button>
       ) : (
         <button
           onClick={() => { onAddToCollab(state.fileId); onClose(); }}
-          className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
-            isDark ? 'hover:bg-orange-500/15 text-orange-400' : 'hover:bg-orange-50 text-orange-600'
-          }`}
+          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold bg-neo-green text-black hover:bg-neo-yellow transition-colors"
         >
-          <Plus size={13} /> Add to Collab
+          <Plus size={14} /> Add to Collab
         </button>
       )}
     </div>
@@ -158,9 +152,9 @@ function TreeItem({
   const isActive = node.fileId === activeFileId;
   const isLoading = node.fileId === loadingFileId;
   const isRepoRoot = depth === 0 && node.repoKey;
-  const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
 
   const storedFile = node.fileId ? files.find(f => f.id === node.fileId) : null;
+
 
   if (node.isDir) {
     const sortedChildren = Array.from(node.children.values()).sort((a, b) => {
@@ -172,26 +166,28 @@ function TreeItem({
       <div>
         <button
           onClick={() => toggleExpand(node.path)}
-          className={`w-full flex items-center gap-1.5 py-1 pr-2 rounded group transition-all duration-150 ease-out ${isDark ? 'hover:bg-slate-800/50' : 'hover:bg-slate-100'}`}
+          className={`w-full flex items-center gap-1.5 py-1.5 pr-2 my-0.5 rounded-none font-bold transition-all ${
+            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-200 text-slate-900'
+          }`}
           style={{ paddingLeft: `${depth * 12 + 8}px` }}
         >
           {isExpanded
-            ? <ChevronDown size={12} className={textMuted} />
-            : <ChevronRight size={12} className={textMuted} />
+            ? <ChevronDown size={14} className="text-black dark:text-white" />
+            : <ChevronRight size={14} className="text-black dark:text-white" />
           }
           {isRepoRoot
-            ? <Package size={14} className="text-purple-400 shrink-0" />
+            ? <Package size={14} className="text-neo-purple shrink-0" />
             : isExpanded
-              ? <FolderOpen size={14} className="text-blue-400 shrink-0" />
-              : <FolderClosed size={14} className="text-blue-400 shrink-0" />
+              ? <FolderOpen size={14} className="text-neo-yellow shrink-0" />
+              : <FolderClosed size={14} className="text-neo-yellow shrink-0" />
           }
-          <span className={`text-[13px] truncate ${isRepoRoot ? 'font-semibold text-purple-400' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+          <span className={`text-[13px] truncate ${isRepoRoot ? 'font-black text-neo-purple' : 'font-bold'}`}>
             {node.name}
           </span>
           {isRepoRoot && onRepoDelete && (
             <button
               onClick={e => { e.stopPropagation(); onRepoDelete(node.repoKey!); }}
-              className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-400 p-0.5 transition-opacity"
+              className="ml-auto opacity-0 group-hover:opacity-100 hover:bg-neo-red hover:text-black p-0.5 border border-black transition-opacity"
             >
               <Trash2 size={11} />
             </button>
@@ -225,26 +221,27 @@ function TreeItem({
       draggable
       onDragStart={() => node.fileId && onDragStart(node.fileId)}
       onDragEnd={onDragEnd}
-      className={`w-full flex items-center gap-1.5 py-1 pr-2 rounded group transition-all duration-150 ease-out cursor-grab active:cursor-grabbing ${
+      className={`w-full flex items-center gap-1.5 py-1.5 px-2 my-1 cursor-grab active:cursor-grabbing transition-all ${
         isActive
-          ? isDark
-            ? 'bg-slate-800/80 text-blue-400'
-            : 'bg-blue-50/80 text-blue-600'
+          ? 'bg-neo-yellow text-black border-2 border-black shadow-neo-sm font-black'
           : isDark
-            ? 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-300'
-            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
+            ? 'bg-[#282C3D] text-white border border-slate-700 hover:bg-neo-purple hover:text-black hover:border-black font-bold'
+            : 'bg-white text-slate-900 border border-slate-300 hover:bg-neo-purple hover:text-black hover:border-black font-bold'
       }`}
-      style={{ paddingLeft: `${depth * 12 + 8}px` }}
+      style={{ marginLeft: `${depth * 10}px` }}
     >
       {isLoading
-        ? <Loader2 size={13} className="animate-spin text-purple-400 shrink-0" />
+        ? <Loader2 size={13} className="animate-spin text-neo-purple shrink-0" />
         : <LangIcon language={storedFile?.language || ''} size={13} />
       }
-      <span className="text-[13px] truncate">{node.name}</span>
+      <span className={`text-[13px] truncate ${isActive ? 'text-black font-black' : isDark ? 'text-white' : 'text-slate-900'}`}>
+        {node.name}
+      </span>
+
       {!isCollabSection && !node.repoKey && (
         <button
           onClick={e => { e.stopPropagation(); node.fileId && onFileDelete(node.fileId); }}
-          className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-400 p-0.5 transition-opacity"
+          className="ml-auto opacity-0 group-hover:opacity-100 hover:bg-neo-red hover:text-black p-0.5 border border-black transition-opacity"
         >
           <Trash2 size={11} />
         </button>
@@ -252,6 +249,7 @@ function TreeItem({
     </button>
   );
 }
+
 
 // ─── Props ─────────────────────────────────────────────────────────────
 

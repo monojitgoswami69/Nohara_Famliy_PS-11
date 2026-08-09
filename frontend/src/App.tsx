@@ -10,6 +10,7 @@ import { detectLanguage, detectLanguageAI } from './utils/detectLanguage';
 import { fetchRawContent, getStoredToken, GitHubRepo, RepoTreeItem } from './services/githubService';
 import { GitHubImportModal } from './components/GitHubImportModal';
 import { CollabRoomModal } from './components/CollabRoomModal';
+import { SplashScreen } from './components/SplashScreen';
 import { useCollabRoom } from './hooks/useCollabRoom';
 
 // Configure Monaco CDN path — @monaco-editor/react handles init internally
@@ -22,7 +23,9 @@ loader.config({
 export const App: React.FC = () => {
   const themeCtx = useThemeProvider();
 
+  const [showSplash, setShowSplash] = useState(true);
   const [files, setFiles] = useState<StoredFile[]>([]);
+
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -251,7 +254,9 @@ export const App: React.FC = () => {
 
   return (
     <ThemeContext.Provider value={themeCtx}>
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
       <div className="min-h-screen font-sans flex flex-col relative overflow-hidden">
+
         <EditorView
           files={files}
           activeFileId={activeFileId}
